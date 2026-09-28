@@ -21,7 +21,7 @@ export class Update extends plugin {
       event: 'message',
       priority: -20,
       rule: [
-        { reg: '^#测试(强制)?更新$', fnc: 'update' }
+        { reg: '^#(强制)?更新队伍伤害$', fnc: 'update' }
       ]
     })
   }
@@ -49,7 +49,7 @@ export class Update extends plugin {
         const detail = ret.stderr || ret.error.message
         logger.error(`[${pluginName}] 更新失败`, detail)
         const brief = detail.split('\n').filter(l => !/^From |->/.test(l.trim())).join('\n').trim()
-        await this.reply(`更新失败：\n${brief.slice(0, 500)}${force ? '' : '\n\n可尝试 #测试强制更新'}`)
+        await this.reply(`更新失败：\n${brief.slice(0, 500)}${force ? '' : '\n\n可尝试 #强制更新队伍伤害'}`)
         return true
       }
 

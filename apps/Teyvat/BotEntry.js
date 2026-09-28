@@ -13,7 +13,7 @@ export class BotEntry extends plugin {
       priority: 3141,
       rule: [
         {
-          reg: /^#测试队伍伤害(详情|过程|全图)?(\d+)?(.*)$/,
+          reg: /^#队伍伤害(详情|过程|全图)?(\d+)?(.*)$/,
           fnc: 'TeyvatEnTry'
         }
       ]
@@ -29,7 +29,7 @@ export class BotEntry extends plugin {
 
   async TeyvatEnTry (e) {
     let at = e.at
-    const regexTeam = /^#测试队伍伤害(详情|过程|全图)?(\d+)?(.*)$/
+    const regexTeam = /^#队伍伤害(详情|过程|全图)?(\d+)?(.*)$/
     const matchTeam = e.msg.match(regexTeam)
     let uid = matchTeam[2] ? matchTeam[2] : await this.GetNowUid(e)
     if (at) {
@@ -48,11 +48,11 @@ export class BotEntry extends plugin {
     let detail = !!matchTeam[1]
     logger.info(e.msg)
     if (!uid) {
-      e.reply('尚未绑定uid，请先【#绑定xxx】\n直接指定查询：#测试队伍伤害100000000钟离，阿贝多，可莉,魈')
+      e.reply('尚未绑定uid，请先【#绑定xxx】\n直接指定查询：#队伍伤害100000000钟离，阿贝多，可莉,魈')
       return true
     }
     if (!roleList) {
-      e.reply('指令错误，使用例子：\n#测试队伍伤害(@张三)钟离，阿贝多，可莉，魈\n#测试队伍伤害100000000钟离，阿贝多，可莉，魈\n#测试队伍伤害钟离，班尼特，香菱，行秋 钟离长e，班尼特eq，香菱q，e', true, { recallMsg: 30 })
+      e.reply('指令错误，使用例子：\n#队伍伤害(@张三)钟离，阿贝多，可莉，魈\n#队伍伤害100000000钟离，阿贝多，可莉，魈\n#队伍伤害钟离，班尼特，香菱，行秋 钟离长e，班尼特eq，香菱q，e', true, { recallMsg: 30 })
       return true
     }
     let splitter = ['\\s', ',', '，', '、', '。', '-', '\\|']
