@@ -11,7 +11,7 @@ export class UpdatePlugin extends plugin {
             priority: 1,
             rule: [
                 {
-                    reg: /^#(fan|Fansky|Fan|fans)(强制)?更新$/,
+                    reg: /^#测试(强制)?更新$/,
                     fnc: 'updateFanSKYPlugin',
                 },
             ]

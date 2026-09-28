@@ -157,7 +157,7 @@ export function parseCombo (tokens, teamNames, resolveName) {
 }
 
 export const COMBO_USAGE = [
-  '手法写在队伍后面：#队伍伤害 钟离,班尼特,香菱,行秋 钟离长e,班尼特eq,香菱q,e',
+  '手法写在队伍后面：#测试队伍伤害 钟离,班尼特,香菱,行秋 钟离长e,班尼特eq,香菱q,e',
   '动作：e / 短e / 长e / q / 重击(zj) / a1~a9(普攻第N段)',
   '省略角色名则沿用上一个角色；可连写(班尼特eq)、重复(a1*3、重击3次)、等待(等0.5)'
 ].join('\n')
