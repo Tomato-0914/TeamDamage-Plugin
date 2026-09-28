@@ -245,17 +245,6 @@
             {{/each}}
         </div>
     </div>
-    <ul class="Buffs">
-        <li class="title"></li>
-        {{each data["buffs"] item}}
-        <li class="buff">
-            <div>{{ item[0] }}</div>
-            <div>{{ item[1] }}</div>
-            <div>{{ item[2] }}</div>
-        </li>
-        {{/each}}
-    </ul>
-    {{ if detail }}
     <ul class="Damages">
         <li class="title"></li>
         <li class="head">
@@ -276,7 +265,16 @@
         </li>
         {{/each}}
     </ul>
-    {{/if}}
+    <ul class="Buffs">
+        <li class="title"></li>
+        {{each data["buffs"] item}}
+        <li class="buff">
+            <div>{{ item[0] }}</div>
+            <div>{{ item[1] }}</div>
+            <div>{{ item[2] }}</div>
+        </li>
+        {{/each}}
+    </ul>
     <div class="copyright">
         FanSky_Qs × Data from Teyvat × Prototype by Nonebot-plugin-gspanel
     </div>
