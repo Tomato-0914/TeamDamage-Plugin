@@ -7,7 +7,7 @@ import simpleTeamDamageRes from './simpleDamage/simpleTeamDamageRes.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import {findPreset} from "../../model/teamPreset.js"
 import {pluginRoot, pluginName} from "../../model/path.js"
-import {COMBO_USAGE, inferTeam, parseCombo, splitTeamAndCombo} from "./combo.js"
+import {COMBO_USAGE, inferTeam, parseCombo, splitTeamAndCombo, splitTokens} from "./combo.js"
 
 let cwd = process.cwd().replace(/\\/g, '/')
 /** 小助手请求头 */
@@ -64,14 +64,21 @@ function resolveName(name) {
 export async function team(e, tokens, uid) {
   let {teamTokens: teamlist, comboTokens} = splitTeamAndCombo(tokens, resolveName)
   let inferred = false
+  // 使用了带手法的队伍预设、且指令里没写手法时，记下预设名用于报错提示
+  let presetCombo = ''
   if (!teamlist.length && comboTokens.length) {
     teamlist = inferTeam(comboTokens, resolveName)
     inferred = teamlist.length > 0
   }
   if (teamlist.length === 1 && !inferred) {
-    const res = findPreset(teamlist[0])
-    if (res[0]) {
-      teamlist = res
+    const preset = findPreset(teamlist[0])
+    if (preset) {
+      // 指令里写了手法优先用指令的，否则用预设手法，预设也没写则走小助手默认手法
+      if (!comboTokens.length && preset.combo) {
+        comboTokens = splitTokens(preset.combo)
+        presetCombo = preset.name
+      }
+      teamlist = preset.chars
     } else {
       await e.reply(`暂未发现[${teamlist[0]}]简写\n尝试识别为单人~`, true)
     }
@@ -113,7 +120,8 @@ export async function team(e, tokens, uid) {
   if (comboTokens.length) {
     custom = parseCombo(comboTokens, teamarId.map(v => v.name), resolveName)
     if (custom.error) {
-      await e.reply(`${custom.error}\n\n${COMBO_USAGE}`, true)
+      const where = presetCombo ? `队伍预设「${presetCombo}」的手法有误：` : ''
+      await e.reply(`${where}${custom.error}\n\n${COMBO_USAGE}`, true)
       return true
     }
   }

@@ -34,6 +34,11 @@ const ACTION_PATTERNS = [
 /** 重复次数后缀：*3 / x3 / ×3 / 3次 */
 const REPEAT_SUFFIX = /^(?:[*x×](\d{1,2})|(\d{1,2})次)$/i
 
+/** 把指令文本按空白和常见标点拆成 token */
+export function splitTokens (text) {
+  return String(text || '').trim().split(/[\s,，、。\-|]+/).filter(Boolean)
+}
+
 /** 看起来是等待的 token（时间可能超范围），用于识别手法起点和给出准确的报错 */
 const WAIT_LIKE = /^等待?\d/
 

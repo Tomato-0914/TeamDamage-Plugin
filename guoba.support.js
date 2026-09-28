@@ -1,13 +1,14 @@
 import { pluginName } from './model/path.js'
 import { loadPresets, savePresets, toNameList } from './model/teamPreset.js'
+import { parseCombo, splitTokens } from './apps/Teyvat/combo.js'
 
-/** 角色名/别名 → 标准名；miao-plugin 不可用时原样返回，不做校验 */
+/** 角色名/别名 → 标准名的函数；miao-plugin 不可用时返回 null，跳过角色和手法校验 */
 async function getResolver () {
   try {
     const { Character } = await import('../miao-plugin/models/index.js')
     return (name) => Character.get(name)?.name || null
   } catch {
-    return (name) => name
+    return null
   }
 }
 
@@ -56,6 +57,13 @@ export function supportGuoba () {
                 componentProps: { placeholder: '例如：雷电将军，九条裟罗，枫原万叶，班尼特' }
               },
               {
+                field: 'combo',
+                label: '手法',
+                component: 'Input',
+                bottomHelpMessage: '可选，留空走小助手默认手法；写法同指令，指令里另写了手法时以指令为准',
+                componentProps: { placeholder: '例如：雷神e，九条裟罗e，万叶e，班尼特q，雷神q' }
+              },
+              {
                 field: 'alias',
                 label: '别名',
                 component: 'GTags',
@@ -79,7 +87,7 @@ export function supportGuoba () {
 
       getConfigData () {
         return {
-          teams: loadPresets().map(p => ({ name: p.name, chars: p.chars.join('，'), alias: p.alias }))
+          teams: loadPresets().map(p => ({ name: p.name, chars: p.chars.join('，'), combo: p.combo, alias: p.alias }))
         }
       },
 
@@ -92,14 +100,21 @@ export function supportGuoba () {
           const name = String(item?.name ?? '').trim()
           const chars = toNameList(item?.chars)
           const alias = toNameList(item?.alias).filter(a => a !== name)
+          const combo = String(item?.combo ?? '').trim()
           const row = `第 ${i + 1} 项${name ? `「${name}」` : ''}`
           if (!name) return fail(`${row}缺少简写`)
           if (names.has(name)) return fail(`简写「${name}」重复了`)
           if (!chars.length || chars.length > 4) return fail(`${row}需要填写 1~4 个角色`)
-          const unknown = chars.filter(c => !resolve(c))
-          if (unknown.length) return fail(`${row}中无法识别的角色：${unknown.join('、')}`)
+          if (resolve) {
+            const unknown = chars.filter(c => !resolve(c))
+            if (unknown.length) return fail(`${row}中无法识别的角色：${unknown.join('、')}`)
+            if (combo) {
+              const res = parseCombo(splitTokens(combo), chars.map(resolve), resolve)
+              if (res.error) return fail(`${row}的手法有误：${res.error}`)
+            }
+          }
           names.add(name)
-          presets.push({ name, alias, chars })
+          presets.push({ name, alias, chars, combo })
         }
         savePresets(presets)
         return Result.ok({}, '保存成功~')

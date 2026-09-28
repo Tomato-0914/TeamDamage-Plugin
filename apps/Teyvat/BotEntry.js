@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import plugin from '../../../../lib/plugins/plugin.js'
-import _ from 'lodash'
 import { team } from './getTeam.js'
+import { splitTokens } from './combo.js'
 import MysApi from './GetATUID.js'
 
 export class BotEntry extends plugin {
@@ -55,9 +55,7 @@ export class BotEntry extends plugin {
       e.reply('指令错误，使用例子：\n#队伍伤害(@张三)钟离，阿贝多，可莉，魈\n#队伍伤害100000000钟离，阿贝多，可莉，魈\n#队伍伤害钟离，班尼特，香菱，行秋 钟离长e，班尼特eq，香菱q，e', true, { recallMsg: 30 })
       return true
     }
-    let splitter = ['\\s', ',', '，', '、', '。', '-', '\\|']
-    let roleAfterList = roleList.trim().split(new RegExp(splitter.join('|'))) || []
-    await team(e, _.compact(roleAfterList), uid)
+    await team(e, splitTokens(roleList), uid)
     return true
   }
 }

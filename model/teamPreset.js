@@ -17,8 +17,9 @@ export function toNameList (value) {
 
 /**
  * 读取当前生效的队伍预设
- * YAML 中每项可写成 `简写: [角色...]` 或 `简写: { alias: [别名...], chars: [角色...] }`
- * @returns {{name: string, alias: string[], chars: string[]}[]}
+ * YAML 中每项可写成 `简写: [角色...]` 或 `简写: { alias: [别名...], chars: [角色...], combo: 手法 }`
+ * combo 为自定义手法文本（写法同指令），留空则走小助手默认手法
+ * @returns {{name: string, alias: string[], chars: string[], combo: string}[]}
  */
 export function loadPresets () {
   const file = fs.existsSync(userPresetPath) ? userPresetPath : defaultPresetPath
@@ -26,15 +27,21 @@ export function loadPresets () {
   return Object.entries(raw).map(([name, v]) => ({
     name: String(name),
     alias: toNameList(Array.isArray(v) ? [] : v?.alias),
-    chars: toNameList(Array.isArray(v) ? v : v?.chars)
+    chars: toNameList(Array.isArray(v) ? v : v?.chars),
+    combo: Array.isArray(v) ? '' : String(v?.combo ?? '').trim()
   }))
 }
 
-/** 把队伍预设写入用户预设文件，没有别名的写成简写形式 */
+/** 把队伍预设写入用户预设文件，没有别名和手法的写成简写形式 */
 export function savePresets (presets) {
   const obj = {}
-  for (const { name, alias, chars } of presets) {
-    obj[name] = alias.length ? { alias, chars } : chars
+  for (const { name, alias, chars, combo } of presets) {
+    if (!alias.length && !combo) {
+      obj[name] = chars
+      continue
+    }
+    obj[name] = { alias, chars }
+    if (combo) obj[name].combo = combo
   }
   // 每个队伍写成一行，和默认预设的风格一致
   const doc = new YAML.Document(obj)
@@ -42,10 +49,10 @@ export function savePresets (presets) {
   fs.writeFileSync(userPresetPath, HEADER + doc.toString({ lineWidth: 0 }), 'utf8')
 }
 
-/** 按简写或别名查找队伍，找不到返回空数组 */
+/** 按简写或别名查找队伍预设，找不到或没有角色时返回 null */
 export function findPreset (teamName) {
-  if (typeof teamName !== 'string') return []
+  if (typeof teamName !== 'string') return null
   const presets = loadPresets()
   const hit = presets.find(p => p.name === teamName) || presets.find(p => p.alias.includes(teamName))
-  return hit ? hit.chars : []
+  return hit?.chars.length ? hit : null
 }

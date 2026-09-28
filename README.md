@@ -64,8 +64,14 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 
 默认简写见 `config/default_SimpleTeamArr.yaml`。自定义方式任选其一，修改即时生效：
 
-- **锅巴**：安装 [Guoba-Plugin](https://gitee.com/guoba-yunzai/guoba-plugin) 后，在锅巴后台「插件管理 → 队伍伤害」中增删队伍预设（简写、角色、别名），保存时会校验角色名
+- **锅巴**：安装 [Guoba-Plugin](https://gitee.com/guoba-yunzai/guoba-plugin) 后，在锅巴后台「插件管理 → 队伍伤害」中增删队伍预设（简写、角色、手法、别名），保存时会校验角色名和手法
 - **手动**：复制默认文件为同目录下的 `SimpleTeamArr.yaml` 后修改
+
+每个预设可以带一套手法（YAML 中的 `combo` 字段，写法同指令）：留空走小助手默认手法，填写后使用该预设时自动套用；指令里另写了手法时以指令为准。
+
+```yaml
+雷九: { alias: [ 雷九万班 ], chars: [ 雷电将军, 九条裟罗, 枫原万叶, 班尼特 ], combo: 雷神e，九条裟罗e，万叶e，班尼特q，雷神q }
+```
 
 自定义文件存在时会完全取代默认预设，删除它即可恢复默认。
 
