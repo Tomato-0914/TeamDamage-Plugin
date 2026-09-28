@@ -13,7 +13,7 @@ export class BotEntry extends plugin {
       priority: 3141,
       rule: [
         {
-          reg: /^#队伍伤害(详情|过程|全图)?(\d+)?(.*)$/,
+          reg: /^#队伍伤害(?:详情|过程|全图)?(\d+)?(.*)$/,
           fnc: 'TeyvatEnTry'
         }
       ]
@@ -29,9 +29,10 @@ export class BotEntry extends plugin {
 
   async TeyvatEnTry (e) {
     let at = e.at
-    const regexTeam = /^#队伍伤害(详情|过程|全图)?(\d+)?(.*)$/
+    // 结果图固定展示伤害过程，旧的 详情/过程/全图 前缀仍兼容但不再区分
+    const regexTeam = /^#队伍伤害(?:详情|过程|全图)?(\d+)?(.*)$/
     const matchTeam = e.msg.match(regexTeam)
-    let uid = matchTeam[2] ? matchTeam[2] : await this.GetNowUid(e)
+    let uid = matchTeam[1] ? matchTeam[1] : await this.GetNowUid(e)
     if (at) {
       let AT_UID = await MysApi.getAT_UID(e, 'all')
       if (!AT_UID) {
@@ -44,8 +45,7 @@ export class BotEntry extends plugin {
         return true
       }
     }
-    let roleList = matchTeam[3]
-    let detail = !!matchTeam[1]
+    let roleList = matchTeam[2]
     logger.info(e.msg)
     if (!uid) {
       e.reply('尚未绑定uid，请先【#绑定xxx】\n直接指定查询：#队伍伤害100000000钟离，阿贝多，可莉,魈')
@@ -57,7 +57,7 @@ export class BotEntry extends plugin {
     }
     let splitter = ['\\s', ',', '，', '、', '。', '-', '\\|']
     let roleAfterList = roleList.trim().split(new RegExp(splitter.join('|'))) || []
-    await team(e, _.compact(roleAfterList), uid, detail)
+    await team(e, _.compact(roleAfterList), uid)
     return true
   }
 }

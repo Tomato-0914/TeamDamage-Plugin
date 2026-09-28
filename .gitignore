@@ -1,39 +1,11 @@
-#过滤pull文件
-OpenAI反代转发
-example
-resources/GitImg/
-MyWeb
+# 依赖与编辑器
 node_modules/
-.idea/
-config/TeyvatConfig/
-resources/cache/
-resources/Github/
-resources/SmallFunction/AT_Xiaozuo7_CxkEmo/CxkImg
-config/OpenAI.json
 package-lock.json
+.idea/
 .vscode/
 
+# 用户自定义的队伍简写（从 default_SimpleTeamArr.yaml 复制而来）
+config/SimpleTeamArr.yaml
 
-# Compiled class file
-*.class
-
-# Log file
+# 日志
 *.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*

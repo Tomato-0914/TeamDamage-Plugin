@@ -25,7 +25,7 @@ for (let i in files) {
         let reason = ret[i].reason + ""
         const missingPackage = reason.match(missingPackageRegex);
         if (missingPackage) {
-            logger.warn(`请先在${logger.red(`plugins/${pluginName}`)}目录运行：${logger.red(`pnpm install`)}安装依赖`)
+            logger.warn(`请先在${logger.red('Yunzai 根目录')}运行：${logger.red('pnpm install')}安装依赖`)
             logger.error(reason)
             missingPackageCount++
         } else {

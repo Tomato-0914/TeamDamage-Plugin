@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 import _ from 'lodash'
-import gsCfg from '../../../../genshin/model/gsCfg.js'
 import fs from 'node:fs'
 
 const cwd = process.cwd().replace(/\\/g, '/')
@@ -30,14 +29,12 @@ async function simpleTeamDamageRes (raw, rolesData) {
   let avatars = {}
   _.each(raw.role_list, role => {
     let panelData = rolesData[role.role]
+    if (!panelData) {
+      logger.warn(`小助手返回了未请求的角色：${role.role}`)
+      return
+    }
 
     let relicSet = _.pickBy(panelData.relicSet, i => i >= 2)
-    let relics = _.map(_.filter(panelData.relics, r => _.keys(relicSet).includes(r.setName)), v => _.nth(v.icon.split('_'), -2))
-    relics = _.countBy(relics, v => v)
-    let sets = {}
-    _.each(relics, (r, k) => {
-      sets[k] = r < 4 ? 2 : 4
-    })
 
     let skills = []
     _.each(panelData.skills, skill => {
@@ -48,10 +45,8 @@ async function simpleTeamDamageRes (raw, rolesData) {
       })
     })
 
-    let weaponPath = getWeapon(panelData.weapon.icon) || ''
     avatars[role.role] = {
       rarity: role.role_star,
-      icon: panelData.icon,
       name: role.role,
       face: getFace(role.role),
       elem: panelData.element,
@@ -62,21 +57,23 @@ async function simpleTeamDamageRes (raw, rolesData) {
         level: panelData.weapon.level,
         rarity: panelData.weapon.rarity,
         affix: panelData.weapon.affix,
-        imgPath: weaponPath
+        imgPath: panelData.weapon.weaponPath
       },
       relicSet,
-      sets,
       cp: _.round(panelData.fightProp['暴击率'], 1),
       cd: _.round(panelData.fightProp['暴击伤害'], 1),
       key_prop: role.key_ability,
       key_value: role.key_value,
-      skills
+      skills,
+      // 小助手没返回该角色的充能信息时用占位，避免模板取值报错
+      recharge: { pct: '-', same: '-', diff: '-' }
     }
   })
 
   _.each(raw.recharge_info, rechargeData => {
-    let [name, tmp] = rechargeData.recharge.split('共获取同色球')
-    let [same, diff] = tmp.split('个，异色球')
+    let [name, tmp] = String(rechargeData.recharge || '').split('共获取同色球')
+    if (!avatars[name] || !tmp) return
+    let [same, diff = ''] = tmp.split('个，异色球')
     if (diff.split('个，无色球').length === 2) {
       // 暂未排版无色球
       diff = diff.split('个，无色球')[0]
@@ -139,14 +136,6 @@ async function simpleTeamDamageRes (raw, rolesData) {
     damages,
     buffs
   }
-}
-
-function getWeapon (icon) {
-  const weaponCfg = gsCfg.getdefSet('weapon', 'data')
-  let name = _.findKey(weaponCfg.Icon, v => v === icon)
-  if (!name) return false
-
-  return `${roleData.weapon}/${name}`
 }
 
 function getTalentPath (role, icon) {

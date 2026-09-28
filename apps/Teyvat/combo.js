@@ -33,6 +33,9 @@ const ACTION_PATTERNS = [
 /** 重复次数后缀：*3 / x3 / ×3 / 3次 */
 const REPEAT_SUFFIX = /^(?:[*x×](\d{1,2})|(\d{1,2})次)$/i
 
+/** 看起来是等待的 token（时间可能超范围），用于识别手法起点和给出准确的报错 */
+const WAIT_LIKE = /^等待?\d/
+
 export function isWait (code) {
   return Array.isArray(code) && code[0] === '=='
 }
@@ -105,7 +108,7 @@ function splitToken (token, resolveName) {
  * @param {(name: string) => string|null} resolveName
  */
 export function splitTeamAndCombo (tokens, resolveName) {
-  const idx = tokens.findIndex((t) => splitToken(t, resolveName))
+  const idx = tokens.findIndex((t) => WAIT_LIKE.test(t) || splitToken(t, resolveName))
   if (idx === -1) return { teamTokens: tokens, comboTokens: [] }
   return { teamTokens: tokens.slice(0, idx), comboTokens: tokens.slice(idx) }
 }
@@ -143,7 +146,7 @@ export function parseCombo (tokens, teamNames, resolveName) {
   for (const token of tokens) {
     const part = splitToken(token, resolveName)
     if (!part) {
-      if (/^等待?\d/.test(token)) return { error: `等待时间需在 ${WAIT_MIN}~${WAIT_MAX} 秒之间，例如：等0.5` }
+      if (WAIT_LIKE.test(token)) return { error: `等待时间需在 ${WAIT_MIN}~${WAIT_MAX} 秒之间，例如：等0.5` }
       return { error: `手法中的「${token}」无法识别` }
     }
     if (part.name) {

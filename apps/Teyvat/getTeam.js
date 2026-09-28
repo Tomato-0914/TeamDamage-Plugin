@@ -60,9 +60,8 @@ function resolveName(name) {
  * @param e 消息事件
  * @param {string[]} tokens 队伍成员（或队伍简写），后面可接自定义手法
  * @param uid 查询 uid
- * @param detail 是否输出伤害过程
  */
-export async function team(e, tokens, uid, detail) {
+export async function team(e, tokens, uid) {
   let {teamTokens: teamlist, comboTokens} = splitTeamAndCombo(tokens, resolveName)
   let inferred = false
   if (!teamlist.length && comboTokens.length) {
@@ -71,11 +70,8 @@ export async function team(e, tokens, uid, detail) {
   }
   if (teamlist.length === 1 && !inferred) {
     const res = await ReturnTeamArr(teamlist[0])
-    if (res && res[0]) {
+    if (res[0]) {
       teamlist = res
-    } else if (res.err) {
-      await e.reply(res.err)
-      return
     } else {
       await e.reply(`暂未发现[${teamlist[0]}]简写\n尝试识别为单人~`, true)
     }
@@ -123,7 +119,6 @@ export async function team(e, tokens, uid, detail) {
   }
 
   let rolesData = {}
-  let weaponsData = {}
   let role_data = []
   let NoDataName = []
   let player = Player.create(uid)
@@ -135,9 +130,7 @@ export async function team(e, tokens, uid, detail) {
       NoDataName.push(char)
       continue
     }
-    let m_roleData = await covProfileroleData(profile)
-    rolesData[char] = m_roleData
-    weaponsData[char] = m_roleData.weapon
+    rolesData[char] = await covProfileroleData(profile)
     role_data.push(await covProfileTeyvatData(profile, uid))
   }
 
@@ -163,23 +156,19 @@ export async function team(e, tokens, uid, detail) {
   }
   let data = await simpleTeamDamageRes(res.result, rolesData)
   data.custom = !!custom
-  for (const key in weaponsData) {
-    data['avatars'][key].weapon.imgPath = weaponsData[key].weaponPath
-  }
-  let ScreenData = await screenData(e, data, detail)
+  let ScreenData = await screenData(e, data)
   let img = await puppeteer.screenshot('TeamDamage', ScreenData)
   await e.reply(img)
   return true
 }
 
-async function screenData(e, data, detail) {
-    //let BotInfo = await getVersionInfo()
-    const RoleData = await JSON.parse(data["pie_data"]);
-    const DamageMap = await RoleData.map((item) => item.damage);
-    const total = await DamageMap.reduce((prev, cur) => prev + cur);
-    const percent = await DamageMap.map((item) => (item / total).toFixed(2));
-    const RoleColor = await JSON.parse(data["pie_color"]);
-    const NameChar = await RoleData.map((item) => item.char);
+async function screenData(e, data) {
+    const RoleData = data.pie_data2;
+    const DamageMap = RoleData.map((item) => item.damage);
+    const total = DamageMap.reduce((prev, cur) => prev + cur, 0) || 1;
+    const percent = DamageMap.map((item) => (item / total).toFixed(2));
+    const RoleColor = data.pie_color2;
+    const NameChar = RoleData.map((item) => item.char);
     const Result = {percent, RoleColor, NameChar};
     const Result2 = RoleData.reduce((acc, d, i) => {
         acc[d.char] = {
@@ -189,7 +178,10 @@ async function screenData(e, data, detail) {
         };
         return acc;
     }, {});
-    //let AcgBg = await getHelpBg()
+    // 模板按角色取充能环颜色，没出现在伤害占比里的角色给个默认色，避免渲染报错
+    for (const name in data.avatars) {
+        if (!Result2[name]) Result2[name] = {name, damage: 0, color: '#999'};
+    }
     return {
         version: 'test',
         YunzaiName: 'test',
@@ -199,7 +191,6 @@ async function screenData(e, data, detail) {
         quality: 100,
         AcgBg: '',
         Bing: Result,
-        detail: detail,
         data: data,
         cwd: cwd,
         saveId: e.user_id,
