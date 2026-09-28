@@ -46,13 +46,13 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 | `短e` / `点e` / `e1` | 短按元素战技 |
 | `长e` / `长按e` / `e2` | 长按元素战技 |
 | `q` / `大招` / `爆发` | 元素爆发 |
-| `重击` / `zj` | 重击 |
+| `重击` / `z` / `zj` | 重击 |
 | `a` / `普攻` / `平a` | 普攻，紧跟在同一角色普攻后时接续下一段（`aaa` = 第 1~3 段），否则为第 1 段 |
 | `a1` ~ `a9` | 普攻第 N 段 |
 | `等0.5` / `等待1s` | 等待（0.1 ~ 20 秒） |
 
 - 动作前写角色名（支持别名）指定由谁执行，**省略角色名则沿用上一个角色**；第一个动作不写角色名时默认为队伍第一位
-- 字母不区分大小写：`e` / `E`、`zj` / `ZJ` 均可
+- 字母不区分大小写：`e` / `E`、`z` / `Z` 均可
 - 同一角色可连写：`班尼特eq` = 班尼特 E 接 Q
 - 可重复：`a1*3`、`重击3次`、`e2x2`
 - 至少需要 2 个技能动作
@@ -62,7 +62,12 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 
 ### 队伍简写
 
-默认简写见 `config/default_SimpleTeamArr.yaml`。如需自定义，复制该文件为同目录下的 `SimpleTeamArr.yaml` 后修改，修改即时生效。
+默认简写见 `config/default_SimpleTeamArr.yaml`。自定义方式任选其一，修改即时生效：
+
+- **锅巴**：安装 [Guoba-Plugin](https://gitee.com/guoba-yunzai/guoba-plugin) 后，在锅巴后台「插件管理 → 队伍伤害」中增删队伍预设（简写、角色、别名），保存时会校验角色名
+- **手动**：复制默认文件为同目录下的 `SimpleTeamArr.yaml` 后修改
+
+自定义文件存在时会完全取代默认预设，删除它即可恢复默认。
 
 ## 致谢
 

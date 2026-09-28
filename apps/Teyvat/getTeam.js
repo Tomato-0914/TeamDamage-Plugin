@@ -5,7 +5,7 @@ import {Character, Player} from '../../../miao-plugin/models/index.js'
 import getServer from './GetData/getServer.js'
 import simpleTeamDamageRes from './simpleDamage/simpleTeamDamageRes.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
-import {ReturnTeamArr} from "../../config/ReturnSimpleArr/getTeamString.js"
+import {findPreset} from "../../model/teamPreset.js"
 import {pluginRoot, pluginName} from "../../model/path.js"
 import {COMBO_USAGE, inferTeam, parseCombo, splitTeamAndCombo} from "./combo.js"
 
@@ -69,7 +69,7 @@ export async function team(e, tokens, uid) {
     inferred = teamlist.length > 0
   }
   if (teamlist.length === 1 && !inferred) {
-    const res = await ReturnTeamArr(teamlist[0])
+    const res = findPreset(teamlist[0])
     if (res[0]) {
       teamlist = res
     } else {
