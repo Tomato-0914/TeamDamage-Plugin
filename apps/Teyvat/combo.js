@@ -24,7 +24,8 @@ const ACTION_PATTERNS = [
   [/^(?:长按?e|e2)/i, () => ['e2']],
   [/^(?:短按?e|点按?e|e1)/i, () => ['e1']],
   [/^(?:重击|zj)/i, () => ['zj']],
-  [/^(?:普攻|平a|a)([1-9])?/i, (m) => [`a${m[1] || 1}`]],
+  // 不带段数的普攻先记为 'a'，在 parseCombo 里按上一个动作接续段数
+  [/^(?:普攻|平a|a)([1-9])?/i, (m) => [m[1] ? `a${m[1]}` : 'a']],
   [/^(?:战技|e)/i, () => ['e']],
   [/^(?:大招|爆发|q)/i, () => ['q']]
 ]
@@ -110,8 +111,24 @@ export function splitTeamAndCombo (tokens, resolveName) {
 }
 
 /**
+ * 没写队伍、直接写手法时，按角色在手法中首次出现的顺序推出队伍
+ * @returns {string[]} 第一个手法没写角色名时无法推断，返回空数组
+ */
+export function inferTeam (comboTokens, resolveName) {
+  const names = []
+  for (const token of comboTokens) {
+    const part = splitToken(token, resolveName)
+    if (!part) continue
+    if (!part.name && !names.length) return []
+    if (part.name && !names.includes(part.name)) names.push(part.name)
+  }
+  return names
+}
+
+/**
  * 解析手法 token 为 custom_combo
  * 省略角色名时沿用上一个角色；第一个动作没写角色名时默认队伍第一位
+ * 不带段数的普攻紧跟在同一角色的普攻后时接续下一段（aaa = a1,a2,a3），否则为第 1 段
  * @param {string[]} tokens
  * @param {string[]} teamNames 与 role_data 顺序一致的角色标准名
  * @param {(name: string) => string|null} resolveName
@@ -140,7 +157,14 @@ export function parseCombo (tokens, teamNames, resolveName) {
       cur = 1
       combo.push(1)
     }
-    for (const code of part.codes) {
+    for (let code of part.codes) {
+      if (code === 'a') {
+        // 角色切换时 combo 末尾是角色序号，不会被当成普攻接续
+        const prev = combo[combo.length - 1]
+        const seg = typeof prev === 'string' && /^a\d$/.test(prev) ? Number(prev[1]) + 1 : 1
+        if (seg > 9) return { error: `「${token}」的普攻段数超出了` }
+        code = `a${seg}`
+      }
       combo.push(code)
       if (isWait(code)) {
         labels.push(codeLabel(code))
@@ -158,6 +182,7 @@ export function parseCombo (tokens, teamNames, resolveName) {
 
 export const COMBO_USAGE = [
   '手法写在队伍后面：#测试队伍伤害 钟离,班尼特,香菱,行秋 钟离长e,班尼特eq,香菱q,e',
-  '动作：e / 短e / 长e / q / 重击(zj) / a1~a9(普攻第N段)',
+  '也可只写手法，队伍按出场顺序自动识别：#测试队伍伤害 钟离长e,班尼特eq,香菱q,行秋qe',
+  '动作：e / 短e / 长e / q / 重击(zj) / a(普攻，连写aaa=1~3段) / a1~a9(指定段数)',
   '省略角色名则沿用上一个角色；可连写(班尼特eq)、重复(a1*3、重击3次)、等待(等0.5)'
 ].join('\n')

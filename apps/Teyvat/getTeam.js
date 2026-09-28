@@ -7,7 +7,7 @@ import simpleTeamDamageRes from './simpleDamage/simpleTeamDamageRes.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import {ReturnTeamArr} from "../../config/ReturnSimpleArr/getTeamString.js"
 import {pluginRoot, pluginName} from "../../model/path.js"
-import {COMBO_USAGE, parseCombo, splitTeamAndCombo} from "./combo.js"
+import {COMBO_USAGE, inferTeam, parseCombo, splitTeamAndCombo} from "./combo.js"
 
 let cwd = process.cwd().replace(/\\/g, '/')
 /** 小助手请求头 */
@@ -64,7 +64,12 @@ function resolveName(name) {
  */
 export async function team(e, tokens, uid, detail) {
   let {teamTokens: teamlist, comboTokens} = splitTeamAndCombo(tokens, resolveName)
-  if (teamlist.length === 1) {
+  let inferred = false
+  if (!teamlist.length && comboTokens.length) {
+    teamlist = inferTeam(comboTokens, resolveName)
+    inferred = teamlist.length > 0
+  }
+  if (teamlist.length === 1 && !inferred) {
     const res = await ReturnTeamArr(teamlist[0])
     if (res && res[0]) {
       teamlist = res
@@ -75,10 +80,14 @@ export async function team(e, tokens, uid, detail) {
       await e.reply(`暂未发现[${teamlist[0]}]简写\n尝试识别为单人~`, true)
     }
   } else if (teamlist.length === 0) {
-    await e.reply("请指定您要计算的队伍喵~", true)
+    await e.reply(`请指定您要计算的队伍喵~\n\n${COMBO_USAGE}`, true)
     return true
   } else if (teamlist.length > 4) {
-      teamlist = teamlist.slice(0, 4)
+    if (inferred) {
+      await e.reply(`手法里出现了超过 4 个角色：${teamlist.join('、')}`, true)
+      return true
+    }
+    teamlist = teamlist.slice(0, 4)
   }
 
   let teamarId = []
