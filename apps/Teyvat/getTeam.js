@@ -147,7 +147,8 @@ export async function team(e, tokens, uid) {
     return true
   }
   let isData = teamarId.map(v => v.name).join('|')
-  await e.reply(custom ? `UID${uid}：${isData}\n自定义手法：${custom.labels.join(',')}` : `UID${uid}：${isData}`)
+  // 具体手法会画在结果图里，这里只标注一下
+  await e.reply(custom ? `UID${uid}：${isData}\n[自定义手法]` : `UID${uid}：${isData}`)
   logger.info(logger.cyan(`[${pluginName}]队伍伤害[请求UID:${uid}]>>>${isData}${custom ? ` 手法:${JSON.stringify(custom.combo)}` : ''}`))
 
   let TiwateBody = {uid, role_data, server: getServer(uid, true)}
