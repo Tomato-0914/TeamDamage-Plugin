@@ -52,7 +52,7 @@ export class BotEntry extends plugin {
       return true
     }
     if (!roleList) {
-      e.reply('指令错误，使用例子：\n#队伍伤害(@张三)钟离，阿贝多，可莉，魈\n#队伍伤害100000000钟离，阿贝多，可莉，魈', true, { recallMsg: 30 })
+      e.reply('指令错误，使用例子：\n#队伍伤害(@张三)钟离，阿贝多，可莉，魈\n#队伍伤害100000000钟离，阿贝多，可莉，魈\n#队伍伤害钟离，班尼特，香菱，行秋 钟离长e，班尼特eq，香菱q，e', true, { recallMsg: 30 })
       return true
     }
     let splitter = ['\\s', ',', '，', '、', '。', '-', '\\|']

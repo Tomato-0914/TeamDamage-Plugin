@@ -6,6 +6,8 @@ import getServer from './GetData/getServer.js'
 import simpleTeamDamageRes from './simpleDamage/simpleTeamDamageRes.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import {ReturnTeamArr} from "../../config/ReturnSimpleArr/getTeamString.js"
+import {pluginRoot, pluginName} from "../../model/path.js"
+import {COMBO_USAGE, parseCombo, splitTeamAndCombo} from "./combo.js"
 
 let cwd = process.cwd().replace(/\\/g, '/')
 /** 小助手请求头 */
@@ -48,7 +50,20 @@ let dmgKeys =
         "grass_dmg": "dendro",
     }
 
-export async function team(e, teamlist, uid, detail) {
+/** 角色名/别名 → 标准名，无法识别返回 null */
+function resolveName(name) {
+  return Character.get(name)?.name || null
+}
+
+/**
+ * 计算队伍伤害
+ * @param e 消息事件
+ * @param {string[]} tokens 队伍成员（或队伍简写），后面可接自定义手法
+ * @param uid 查询 uid
+ * @param detail 是否输出伤害过程
+ */
+export async function team(e, tokens, uid, detail) {
+  let {teamTokens: teamlist, comboTokens} = splitTeamAndCombo(tokens, resolveName)
   if (teamlist.length === 1) {
     const res = await ReturnTeamArr(teamlist[0])
     if (res && res[0]) {
@@ -83,72 +98,69 @@ export async function team(e, teamlist, uid, detail) {
     return
   }
 
-  let TiwateBody = {}
+  if (teamarId.some(v => ['旅行者', '空', '荧', '萤'].includes(v.name))) {
+    await e.reply('[旅行者]暂不支持计算伤害喵！~')
+    return true
+  }
+
+  // 手法在请求前解析，写错了不必等面板和接口
+  let custom = null
+  if (comboTokens.length) {
+    custom = parseCombo(comboTokens, teamarId.map(v => v.name), resolveName)
+    if (custom.error) {
+      await e.reply(`${custom.error}\n\n${COMBO_USAGE}`, true)
+      return true
+    }
+  }
+
   let rolesData = {}
   let weaponsData = {}
-  TiwateBody['uid'] = uid
   let role_data = []
   let NoDataName = []
-  let isData = []
   let player = Player.create(uid)
-  try {
-    _.each(teamarId, async (v) => {
-      let char = v.name
-      let profile = player.getProfile(v.id)
-
-      if (['旅行者', '空', '荧', '萤'].includes(char)) {
-        errMsg = '[旅行者]暂不支持计算伤害喵！~'
-        throw new Error()
-      }
-
-      if (!profile || !profile.hasData) {
-        NoDataName.push(char)
-        return
-      }
-
-      isData.push(char)
-      let m_roleData = await covProfileroleData(profile)
-      rolesData[char] = m_roleData
-      weaponsData[char] = m_roleData.weapon
-      let m_TeyvatData = await covProfileTeyvatData(profile, uid)
-      role_data.push(m_TeyvatData)
-    })
-  } catch (error) {
-    await e.reply(errMsg)
-    return
+  // role_data 的顺序即手法里的角色序号，必须按队伍顺序依次处理
+  for (const v of teamarId) {
+    let char = v.name
+    let profile = player.getProfile(v.id)
+    if (!profile || !profile.hasData) {
+      NoDataName.push(char)
+      continue
+    }
+    let m_roleData = await covProfileroleData(profile)
+    rolesData[char] = m_roleData
+    weaponsData[char] = m_roleData.weapon
+    role_data.push(await covProfileTeyvatData(profile, uid))
   }
-  
+
   if (NoDataName.length > 0) {
     await e.reply(`UID${uid}：缺少${NoDataName.join('|')}\n请先通过【#更新面板】拿到对应角色数据。`, true)
     return true
   }
-  await e.reply(`UID${uid}：${isData.join('|')}`)
-  logger.info(logger.cyan(`[FanSky_Qs]队伍伤害[请求UID:${uid}]>>>${isData.join('|')}`))
-  TiwateBody['role_data'] = role_data
-  TiwateBody.server = getServer(uid, true)
+  let isData = teamarId.map(v => v.name).join('|')
+  await e.reply(custom ? `UID${uid}：${isData}\n自定义手法：${custom.labels.join(',')}` : `UID${uid}：${isData}`)
+  logger.info(logger.cyan(`[${pluginName}]队伍伤害[请求UID:${uid}]>>>${isData}${custom ? ` 手法:${JSON.stringify(custom.combo)}` : ''}`))
 
-    // let CachePath = `${process.cwd()}/plugins/FanSky_Qs/resources/TevatRequestDataCache/MiaoData/${uid}.json`
-    // if (!fs.existsSync(CachePath)) {
-    //     fs.writeFileSync(CachePath, '{}')
-    // }
-    // await fs.writeFileSync(CachePath, JSON.stringify(TiwateBody))
+  let TiwateBody = {uid, role_data, server: getServer(uid, true)}
+  if (custom) TiwateBody.custom_combo = custom.combo
 
-  const TiwateRaw = await getTeyvatData(TiwateBody, 'team')
-  if (TiwateRaw.code !== 200 || !TiwateRaw.result) {
-    logger.error(`>>>[错误信息] ${TiwateRaw.info}`)
-    await e.reply(`提瓦特小助手接口无法访问或返回错误`, true)
-    return true
-  } else {
-    let data = await simpleTeamDamageRes(TiwateRaw.result, rolesData)
-    for (const key in weaponsData) {
-      logger.info(key)
-      data['avatars'][key].weapon.imgPath = weaponsData[key].weaponPath
-    }
-    let ScreenData = await screenData(e, data, detail)
-    let img = await puppeteer.screenshot('FanSkyTeyvat', ScreenData)
-    await e.reply(img)
+  const res = await getTeyvatData(TiwateBody)
+  if (!res.ok) {
+    logger.error(`>>>[错误信息] ${res.msg}`)
+    let msg = res.msg
+    if (custom && res.empty) msg = '小助手拒绝了这套手法，可能是某个动作该角色无法使用（如普攻段数超出）'
+    else if (custom && res.rejected) msg += '\n也可能是手法里有该角色无法使用的动作（如普攻段数超出），可去掉手法用默认轴试试'
+    await e.reply(msg, true)
     return true
   }
+  let data = await simpleTeamDamageRes(res.result, rolesData)
+  data.custom = !!custom
+  for (const key in weaponsData) {
+    data['avatars'][key].weapon.imgPath = weaponsData[key].weaponPath
+  }
+  let ScreenData = await screenData(e, data, detail)
+  let img = await puppeteer.screenshot('FanSkyTeyvat', ScreenData)
+  await e.reply(img)
+  return true
 }
 
 async function screenData(e, data, detail) {
@@ -183,9 +195,9 @@ async function screenData(e, data, detail) {
         cwd: cwd,
         saveId: e.user_id,
         miaoRes: `${cwd}/plugins/miao-plugin/resources/`,
-        tplFile: `${cwd}/plugins/FanSky_Qs/resources/Teyvat/html.html`,
+        tplFile: `${pluginRoot}/resources/Teyvat/html.html`,
         /** 绝对路径 */
-        pluResPath: `${cwd}/plugins//FanSky_Qs/resources/Teyvat/`,
+        pluResPath: `${pluginRoot}/resources/Teyvat/`,
     }
 }
 
@@ -360,34 +372,41 @@ async function covProfileroleData(profile) {
 }
 
 /**
- * 获取小助手对应功能的数据
- * @param {String} TBody 请求需要的数据
- * @param {String} type 功能对应api 默认为 Single
- * @returns 小助手返回数据
+ * 请求小助手队伍伤害
+ * @param {Object} TBody {uid, server, role_data, custom_combo?}
+ * @returns {Promise<{ok: true, result: Object} | {ok: false, msg: string, empty?: boolean, rejected?: boolean}>}
+ *   empty：服务端返回空 body；rejected：服务端没算出结果。用了自定义手法时两者都可能是手法里有非法动作
  */
-async function getTeyvatData(TBody, type = 'single') {
-    const apiMap = {
-        single: 'https://api.lelaer.com/ys/getDamageResult.php',
-        team: 'https://api.lelaer.com/ys/getTeamResult.php'
-    }
+async function getTeyvatData(TBody) {
+    let text
     try {
-        const response = await fetch(apiMap[type], {
+        const response = await fetch('https://api.lelaer.com/ys/getTeamResult.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...headers // 假设您已经定义了 `headers` 对象
+                ...headers
             },
             body: JSON.stringify(TBody),
-            timeout: 15000
+            signal: AbortSignal.timeout(20000)
         })
-        const jsonResponse = await response.json()
-        // logger.info(jsonResponse)
-        // logger.info(jsonResponse.result)
-        return jsonResponse
+        text = await response.text()
     } catch (error) {
         logger.info(error)
-        return {
-            info: "提瓦特小助手接口无法访问或返回错误"
-        }
+        return {ok: false, msg: '提瓦特小助手接口无法访问，请稍后重试'}
     }
+    if (!text.trim()) return {ok: false, empty: true, msg: '提瓦特小助手返回为空'}
+    let json
+    try {
+        json = JSON.parse(text)
+    } catch (error) {
+        return {ok: false, msg: '提瓦特小助手返回异常，请稍后重试'}
+    }
+    if (json.code !== 200 || !json.result) {
+        return {ok: false, msg: json.info || json.tips || '提瓦特小助手接口返回错误'}
+    }
+    // 队伍不受支持、或手法里有非法动作时 zdl_result 为空，提示在 zdl_tips1
+    if (!json.result.zdl_result) {
+        return {ok: false, rejected: true, msg: json.result.zdl_tips1 || '提瓦特小助手没能算出这个队伍的伤害'}
+    }
+    return {ok: true, result: json.result}
 }

@@ -603,7 +603,15 @@ div.Actions > div.title::before {
 }
 
 div.Actions > div.title::after {
-    content: "默认手法可能并非最优，如需自定义操作手法请使用微信小程序";
+    content: "默认手法可能并非最优，可在队伍后接手法自定义，如：钟离长e,班尼特eq";
+}
+
+div.Actions.custom > div.title::before {
+    content: "操作手法（自定义）";
+}
+
+div.Actions.custom > div.title::after {
+    content: "以上为小助手按自定义手法实际执行的动作";
 }
 
 div.Actions > div.act {

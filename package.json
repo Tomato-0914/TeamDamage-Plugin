@@ -1,7 +1,6 @@
 {
-  "name": "FanSky_Qs",
-  "version": "1.5.9",
-  "author": "AFanSKyQs",
-  "description": "Yunzai-Bot/Miao-Yunzai插件",
+  "name": "TeamDamage-Plugin",
+  "version": "1.6.0",
+  "description": "Yunzai-Bot/Miao-Yunzai 原神队伍伤害插件",
   "type": "module"
 }

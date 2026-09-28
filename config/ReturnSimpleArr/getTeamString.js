@@ -1,8 +1,9 @@
 import YAML from "yaml"
 import fs from "node:fs"
+import { pluginRoot } from "../../model/path.js"
 
-const default_teamPath = `${process.cwd()}/plugins/FanSky_Qs/config/default_SimpleTeamArr.yaml`;
-const teamPath = `${process.cwd()}/plugins/FanSky_Qs/config/SimpleTeamArr.yaml`;
+const default_teamPath = `${pluginRoot}/config/default_SimpleTeamArr.yaml`;
+const teamPath = `${pluginRoot}/config/SimpleTeamArr.yaml`;
 
 export async function ReturnTeamArr(teamName) {
     if (typeof teamName !== 'string') return [];

@@ -237,7 +237,7 @@
 <!--        </div>-->
 <!--        {{/each}}-->
 <!--    </div>-->
-    <div class="Actions">
+    <div class="Actions{{ if data.custom }} custom{{/if}}">
         <div class="title"></div>
         <div class="act">
             {{each data["actions"] action}}
