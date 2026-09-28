@@ -167,7 +167,7 @@ export async function team(e, tokens, uid, detail) {
     data['avatars'][key].weapon.imgPath = weaponsData[key].weaponPath
   }
   let ScreenData = await screenData(e, data, detail)
-  let img = await puppeteer.screenshot('FanSkyTeyvat', ScreenData)
+  let img = await puppeteer.screenshot('TeamDamage', ScreenData)
   await e.reply(img)
   return true
 }
