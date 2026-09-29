@@ -7,6 +7,8 @@
  * - 技能码：e / e1(短按) / e2(长按) / q / zj(重击) / a1~a9(普攻第 N 段)
  *   用户写的 z 也是重击，本地转换为 zj
  * - 等待为嵌套数组 ['==', 秒数]，秒数必须是 number
+ * - 跳跃 / 闪避为嵌套数组 ['k'] / ['s']（小助手显示为「跳跃」/「冲刺」），直接写 'k' / 's' 会被拒绝；
+ *   服务端返回的 custom 字段里它们的 skill_code 也是 k / s，数组第二项会被忽略
  * - 服务端遇到不认识的技能码会返回空 body 或「暂不支持该队伍」，所以这里先在本地规范化
  * - 只有 1 个动作时服务端会忽略自定义手法，这里要求至少 2 个技能动作
  */
@@ -22,6 +24,8 @@ const ACTION_PATTERNS = [
     const sec = Math.round(Number(m[1]) * 100) / 100
     return sec >= WAIT_MIN && sec <= WAIT_MAX ? [['==', sec]] : null
   }],
+  [/^(?:跳跃|跳|k)/i, () => [['k']]],
+  [/^(?:闪避|闪|冲刺|s)/i, () => [['s']]],
   [/^(?:长按?e|e2)/i, () => ['e2']],
   [/^(?:短按?e|点按?e|e1)/i, () => ['e1']],
   [/^(?:重击|zj|z)/i, () => ['zj']],
@@ -46,8 +50,14 @@ export function isWait (code) {
   return Array.isArray(code) && code[0] === '=='
 }
 
+/** 跳跃、闪避这类不造成伤害的移动动作 */
+function isMove (code) {
+  return Array.isArray(code) && (code[0] === 'k' || code[0] === 's')
+}
+
 function codeLabel (code) {
   if (isWait(code)) return `等${code[1]}s`
+  if (isMove(code)) return code[0] === 'k' ? '跳跃' : '闪避'
   return { e: 'E', e1: '短E', e2: '长E', q: 'Q', zj: '重击' }[code] || code.toUpperCase()
 }
 
@@ -179,7 +189,8 @@ export function parseCombo (tokens, teamNames, resolveName) {
         labels.push(codeLabel(code))
       } else {
         labels.push(`${teamNames[cur - 1]}${codeLabel(code)}`)
-        skillCount++
+        // 跳跃、闪避不算技能动作，只写它们时服务端同样会忽略手法
+        if (!isMove(code)) skillCount++
       }
     }
   }
@@ -193,5 +204,6 @@ export const COMBO_USAGE = [
   '手法写在队伍后面：#队伍伤害 钟离,班尼特,香菱,行秋 钟离长e,班尼特eq,香菱q,e',
   '也可只写手法，队伍按出场顺序自动识别：#队伍伤害 钟离长e,班尼特eq,香菱q,行秋qe',
   '动作：e / 短e / 长e / q / 重击(z/zj) / a(普攻，连写aaa=1~3段) / a1~a9(指定段数)',
-  '省略角色名则沿用上一个角色；可连写(班尼特eq)、重复(a1*3、重击3次)、等待(等0.5)'
+  '跳跃(k) / 闪避(s)；等待(等0.5)',
+  '省略角色名则沿用上一个角色；可连写(班尼特eq、胡桃azk)、重复(a1*3、重击3次)'
 ].join('\n')
