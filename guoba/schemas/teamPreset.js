@@ -4,7 +4,8 @@ import { parseCombo, splitTokens } from '../../apps/Teyvat/combo.js'
 /** 队伍预设：对应 config/SimpleTeamArr.yaml */
 export default [
   {
-    component: 'SOFT_GROUP_BEGIN',
+    // 只有一组配置，用 Divider 作标题；SOFT_GROUP_BEGIN 在插件详情弹窗里会显示成「未知的组件」
+    component: 'Divider',
     label: '队伍预设'
   },
   {

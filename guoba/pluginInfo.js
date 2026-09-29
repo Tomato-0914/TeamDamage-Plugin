@@ -8,6 +8,8 @@ export default {
   link: 'https://github.com/Tomato-0914/TeamDamage-Plugin',
   isV3: true,
   isV2: false,
+  // 是否显示在左侧菜单：默认 auto 需要至少 3 个配置项，这里配置项较少，直接指定显示
+  showInMenu: true,
   description: '原神队伍伤害计算，支持自定义手法与队伍简写预设',
   // 显示图标，此为个性化配置
   // 图标可在 https://icon-sets.iconify.design 这里进行搜索
