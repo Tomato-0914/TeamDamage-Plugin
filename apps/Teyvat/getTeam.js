@@ -1,9 +1,11 @@
+import fs from 'node:fs'
 import fetch from 'node-fetch'
 import _ from 'lodash'
 import {Format} from '../../../miao-plugin/components/index.js'
 import {Character, Player} from '../../../miao-plugin/models/index.js'
 import getServer from './GetData/getServer.js'
 import simpleTeamDamageRes from './simpleDamage/simpleTeamDamageRes.js'
+import buildScreenView from './simpleDamage/screenView.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import {findPreset} from "../../model/teamPreset.js"
 import {pluginRoot, pluginName} from "../../model/path.js"
@@ -198,45 +200,20 @@ export async function team(e, tokens, uid) {
   }
   let data = await simpleTeamDamageRes(res.result, rolesData)
   data.custom = !!custom
-  let ScreenData = await screenData(e, data)
+  let ScreenData = screenData(e, data)
   let img = await puppeteer.screenshot('TeamDamage', ScreenData)
   await e.reply(img)
   return true
 }
 
-async function screenData(e, data) {
-    const RoleData = data.pie_data2;
-    const DamageMap = RoleData.map((item) => item.damage);
-    const total = DamageMap.reduce((prev, cur) => prev + cur, 0) || 1;
-    const percent = DamageMap.map((item) => (item / total).toFixed(2));
-    const RoleColor = data.pie_color2;
-    const NameChar = RoleData.map((item) => item.char);
-    const Result = {percent, RoleColor, NameChar};
-    const Result2 = RoleData.reduce((acc, d, i) => {
-        acc[d.char] = {
-            name: d.char,
-            damage: d.damage,
-            color: RoleColor[i]
-        };
-        return acc;
-    }, {});
-    // 模板按角色取充能环颜色，没出现在伤害占比里的角色给个默认色，避免渲染报错
-    for (const name in data.avatars) {
-        if (!Result2[name]) Result2[name] = {name, damage: 0, color: '#999'};
-    }
+function screenData(e, data) {
+    const miaoRes = `${cwd}/plugins/miao-plugin/resources/`
     return {
-        version: 'test',
-        YunzaiName: 'test',
-        YunzaiVersion: 'test',
-        result: Result2,
-        RoleData: RoleData,
+        ...buildScreenView(data, resolveName, miaoRes, fs.existsSync),
+        data,
         quality: 100,
-        AcgBg: '',
-        Bing: Result,
-        data: data,
-        cwd: cwd,
         saveId: e.user_id,
-        miaoRes: `${cwd}/plugins/miao-plugin/resources/`,
+        miaoRes,
         tplFile: `${pluginRoot}/resources/Teyvat/html.html`,
         /** 绝对路径 */
         pluResPath: `${pluginRoot}/resources/Teyvat/`,

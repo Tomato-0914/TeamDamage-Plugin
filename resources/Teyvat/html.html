@@ -1,361 +1,162 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-    <!-- <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"> -->
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
-    <!-- <title>Document</title> -->
-    <link rel="stylesheet" href="{{pluResPath}}style.css">
-    <link rel="preload" href="https://unpkg.com/@antv/g2plot@latest/dist/g2plot.js" as="script"/>
-    <style>
-        #container.火 {
-            background-image: url({{miaoRes}}common/bg/bg-pyro.webp);
-            /*background-image: url({{AcgBg}});*/
-            /*background-position: inherit;*/
-            /*background-repeat: repeat-y;*/
-            /*background-size: 960px;*/
-            /*position: absolute;*/
-            /*top: 0;*/
-        }
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "PanelFont"; src: url({{pluResPath}}../fonts/HYWH-65W.ttf); }
+  @font-face { font-family: "NumFont"; src: url({{pluResPath}}../fonts/tttgbnumber.ttf); }
+  :root { --card: rgba(255,255,255,0.52); --ink: #26242d; --sub: #6f6a78; --line: rgba(0,0,0,0.07); }
+  /* 跟随主 C 元素：底色 / 头图渐变 / 强调色 */
+  #container.pyro    { --bg: #f6eee6; --h1: #fff4ea; --h2: #ffe2cc; --h3: #ffc9a5; --accent: #e8743b; --accent-rgb: 232,116,59;  --soft: #fbe9dc; }
+  #container.hydro   { --bg: #eaf2f9; --h1: #eef7ff; --h2: #d6ebff; --h3: #b7dbff; --accent: #2f8fd8; --accent-rgb: 47,143,216;  --soft: #deedfa; }
+  #container.electro { --bg: #f0ebf8; --h1: #f6f0ff; --h2: #e6dbff; --h3: #d2bfff; --accent: #8a5cd6; --accent-rgb: 138,92,214;  --soft: #ebe2fb; }
+  #container.cryo    { --bg: #eaf5f9; --h1: #effbff; --h2: #d8f2fb; --h3: #bde7f5; --accent: #2ea5c9; --accent-rgb: 46,165,201;  --soft: #dbf1f8; }
+  #container.anemo   { --bg: #e9f5f1; --h1: #effcf7; --h2: #d4f3e8; --h3: #b4e9d7; --accent: #1fa982; --accent-rgb: 31,169,130;  --soft: #d8f2e8; }
+  #container.geo     { --bg: #f7f1e3; --h1: #fff8e6; --h2: #ffecc2; --h3: #ffdd96; --accent: #c98a12; --accent-rgb: 201,138,18;  --soft: #f8ebcc; }
+  #container.dendro  { --bg: #edf6e7; --h1: #f3fbea; --h2: #def3c9; --h3: #c5e9a4; --accent: #5c9e2c; --accent-rgb: 92,158,44;   --soft: #e2f2d2; }
+  body { margin: 0; }
+  #container { width: 960px; position: relative; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "PanelFont", sans-serif; padding-bottom: 16px; }
+  /* 背景：主 C 立绘放大模糊 + 元素色调的浅色遮罩 */
+  #container > .bgimg { position: absolute; inset: -80px; background: url({{splash}}) center 20% / cover no-repeat; filter: blur(36px) saturate(1.3); opacity: 0.9; }
+  #container > .bgmask { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.35) 600px, rgba(255,255,255,0.45) 100%), linear-gradient(135deg, var(--h2), var(--h3)); mix-blend-mode: normal; opacity: 0.78; }
+  #container > .body { position: relative; }
+  .card { background: var(--card); border: 1px solid rgba(255,255,255,0.65); border-radius: 16px; backdrop-filter: blur(16px) saturate(1.2); box-shadow: 0 6px 24px rgba(40, 30, 60, 0.10); }
 
-        div.Avatars > div.avatar > div.detail > div.talent.火 > div {
-            background-image: url({{miaoRes}}common/bg/talent-pyro.webp);
-        }
+  .head { position: relative; height: 230px; overflow: hidden; }
+  .head .splash { position: absolute; right: -40px; top: -40px; height: 360px; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 40%); }
+  .head .l { position: absolute; left: 32px; top: 26px; }
+  .head .uid { font-size: 16px; color: var(--sub); }
+  .head .title { font-size: 30px; font-weight: 700; margin-top: 4px; }
+  .head .team { font-size: 17px; color: #5d5866; margin-top: 4px; }
+  .head .big { display: flex; align-items: baseline; gap: 14px; margin-top: 18px; }
+  .head .big .dps { font-family: "NumFont"; font-size: 64px; color: var(--accent); line-height: 1; }
+  .head .big .u { font-size: 18px; color: var(--sub); }
+  .head .rank { position: absolute; left: 520px; top: 34px; width: 92px; height: 92px; border-radius: 50%; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 16px rgba(var(--accent-rgb),0.25); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .head .rank .r { font-family: "NumFont"; font-size: 36px; color: var(--accent); line-height: 1; }
+  .head .rank .k { font-size: 12px; color: var(--sub); margin-top: 4px; }
 
-        #container.水 {
-            background-image: url({{miaoRes}}common/bg/bg-hydro.webp);
-            /*background-image: url({{AcgBg}});*/
-            /*background-repeat: repeat-y;*/
-            /*background-position: inherit;*/
-            /*background-size: 960px;*/
-            /*position: absolute;*/
-            /*top: 0;*/
-        }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: -26px 20px 14px; position: relative; }
+  .kpi { padding: 12px 16px; }
+  .kpi .v { font-family: "NumFont"; font-size: 26px; }
+  .kpi .k { font-size: 13px; color: var(--sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        div.Avatars > div.avatar > div.detail > div.talent.水 > div {
-            background-image: url({{miaoRes}}common/bg/talent-hydro.webp);
-        }
+  .sec { margin: 0 20px 14px; padding: 16px 18px; }
+  .sec h3 { margin: 0 0 12px; font-size: 20px; display: flex; align-items: baseline; gap: 10px; }
+  .sec h3::before { content: ""; width: 5px; height: 18px; border-radius: 3px; background: var(--accent); align-self: center; }
+  .sec h3 small { font-size: 13px; font-weight: 400; color: var(--sub); }
 
-        #container.风 {
-            background-image: url({{miaoRes}}common/bg/bg-anemo.webp);
-            /*background-image: url({{AcgBg}});*/
-            /*background-repeat: repeat-y;*/
-            /*background-position: inherit;*/
-            /*background-size: 960px;*/
-            /*position: absolute;*/
-            /*top: 0;*/
-        }
+  .stack { display: flex; height: 26px; border-radius: 13px; overflow: hidden; }
+  .stack > div { display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; }
 
-        div.Avatars > div.avatar > div.detail > div.talent.风 > div {
-            background-image: url({{miaoRes}}common/bg/talent-anemo.webp);
-        }
+  .avs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .av { border: 1px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.35); border-radius: 14px; padding: 12px; position: relative; overflow: hidden; }
+  .av::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--c); }
+  .av .face { width: 72px; height: 72px; border-radius: 50%; display: block; margin: 4px auto 6px; background: var(--soft); object-fit: cover; }
+  .av .name { text-align: center; font-size: 18px; }
+  .av .meta { text-align: center; font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .av .gear { display: flex; justify-content: center; gap: 6px; margin: 8px 0; }
+  .av .gear img { width: 36px; height: 36px; border-radius: 8px; background: var(--soft); }
+  .av .kv { display: flex; justify-content: space-between; font-size: 12px; color: var(--sub); padding: 3px 2px; border-top: 1px dashed var(--line); }
+  .av .kv b { font-family: "NumFont"; font-weight: 400; color: var(--ink); font-size: 14px; }
 
-        #container.雷 {
-            background-image: url({{miaoRes}}common/bg/bg-electro.webp);
-            /*background-image: url({{AcgBg}});*/
-            /*background-repeat: repeat-y;*/
-            /*background-position: inherit;*/
-            /*background-size: 960px;*/
-            /*position: absolute;*/
-            /*top: 0;*/
-        }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips span { font-size: 14px; padding: 3px 9px; border-radius: 7px; background: rgba(255,255,255,0.6); color: #3f3a46; }
+  .chips span.k { background: rgba(var(--accent-rgb),0.16); color: var(--accent); }
 
-        div.Avatars > div.avatar > div.detail > div.talent.雷 > div {
-            background-image: url({{miaoRes}}common/bg/talent-electro.webp);
-        }
+  .tl { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: 0 2px; border-bottom: 1px solid var(--line); }
+  .tl .col { flex: 1; height: 100%; display: flex; flex-direction: column-reverse; }
+  .tl .col i { display: block; width: 100%; }
+  .tlx { display: flex; gap: 4px; padding: 4px 2px 0; }
+  .tlx span { flex: 1; text-align: center; font-size: 11px; color: var(--sub); font-family: "NumFont"; }
+  .lg { display: flex; gap: 16px; font-size: 13px; color: var(--sub); margin-top: 10px; }
+  .lg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
 
-        #container.草 {
-            background-image: url({{miaoRes}}common/bg/bg-dendro.webp);
-            /*background-image: url({{AcgBg}});*/
-            /*background-repeat: repeat-y;*/
-            /*background-position: inherit;*/
-            /*background-size: 960px;*/
-            /*position: absolute;*/
-            /*top: 0;*/
-        }
+  .dmg { display: flex; gap: 16px; }
+  .dmg table { flex: 1; border-collapse: collapse; font-size: 13px; align-self: flex-start; }
+  .dmg th { color: var(--sub); font-weight: 400; text-align: right; padding: 5px 6px; background: rgba(255,255,255,0.45); }
+  .dmg th:nth-child(2), .dmg td:nth-child(2) { text-align: left; }
+  .dmg td { padding: 3px 6px; text-align: right; font-family: "NumFont"; border-bottom: 1px solid var(--line); }
+  .dmg td:nth-child(2) { font-family: "PanelFont"; white-space: nowrap; }
+  .dmg td i { display: inline-block; width: 4px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .dmg tr.hot td { color: var(--accent); background: rgba(var(--accent-rgb),0.14); }
 
-        div.Avatars > div.avatar > div.detail > div.talent.草 > div {
-            background-image: url({{miaoRes}}common/bg/talent-dendro.webp);
-        }
-
-        #container.冰 {
-            background-image: url({{miaoRes}}common/bg/bg-cryo.webp);
-            /*background-image: url({{AcgBg}});*/
-            /*background-repeat: repeat-y;*/
-            /*background-position: inherit;*/
-            /*background-size: 960px;*/
-            /*position: absolute;*/
-            /*top: 0;*/
-        }
-
-        div.Avatars > div.avatar > div.detail > div.talent.冰 > div {
-            background-image: url({{miaoRes}}common/bg/talent-cryo.webp);
-        }
-
-        #container.岩 {
-            background-image: url({{miaoRes}}common/bg/bg-geo.webp);
-            /*background-image: url({{AcgBg}});*/
-            /*background-repeat: repeat-y;*/
-            /*background-position: inherit;*/
-            /*background-size: 960px;*/
-            /*position: absolute;*/
-            /*top: 0;*/
-        }
-
-        div.Avatars > div.avatar > div.detail > div.talent.岩 > div {
-            background-image: url({{miaoRes}}common/bg/talent-geo.webp);
-        }
-    </style>
+  .buffs .it { display: flex; font-size: 14px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .buffs .t { flex: 0 0 56px; font-family: "NumFont"; color: var(--sub); }
+  .buffs .n { flex: 0 0 150px; color: var(--accent); }
+  .foot { text-align: center; font-size: 12px; color: var(--sub); }
+</style>
 </head>
 <body>
-<div id="container" class="{{ data['elem'] }}">
-    <div class="TopLeftPanel">
-        <div class="UID">{{ data["uid"] }}</div>
-        {{ if data["rank"].indexOf("B") !== -1 }}
-        <div class="rank">
-            <div class="title" style="color: rgb(255,136,0);">{{ data["rank"] }}</div>
-            <div class="dps" style="color: rgb(252, 218, 166);">{{ data["dps"] }}</div>
-            <div class="time" style="color: rgb(252, 218, 166);">{{ data["tm"] }}</div>
-            <div class="total" style="color: rgb(252, 218, 166);">{{ data["total"] }}</div>
-        </div>
-        {{/if}}
-        {{ if data["rank"].indexOf("A") !== -1 && data["rank"].indexOf("ACE") === -1 }}
-        <div class="rank">
-            <div class="title" style="color: rgb(10,227,169);">{{ data["rank"] }}</div>
-            <div class="dps" style="color: rgb(172, 248, 201);">{{ data["dps"] }}</div>
-            <div class="time" style="color: rgb(172, 248, 201);">{{ data["tm"] }}</div>
-            <div class="total" style="color: rgb(172, 248, 201);">{{ data["total"] }}</div>
-        </div>
-        {{/if}}
-        {{ if data["rank"].indexOf("S") !== -1 }}
-        <div class="rank">
-            <div class="title" style="color: rgba(239,0,255,1);">{{ data["rank"] }}</div>
-            <div class="dps" style="color: rgb(251, 195, 255);">{{ data["dps"] }}</div>
-            <div class="time" style="color: rgb(251, 195, 255);">{{ data["tm"] }}</div>
-            <div class="total" style="color: rgb(251, 195, 255);">{{ data["total"] }}</div>
-        </div>
-        {{/if}}
-        {{ if data["rank"].indexOf("ACE") !== -1 }}
-        <div class="rank">
-            <div class="title" style="color: rgba(249,0,0,1);">{{ data["rank"] }}</div>
-            <div class="dps" style="color: rgb(255, 181, 181);">{{ data["dps"] }}</div>
-            <div class="time" style="color: rgb(255, 181, 181);">{{ data["tm"] }}</div>
-            <div class="total" style="color: rgb(255, 181, 181);">{{ data["total"] }}</div>
-        </div>
-        {{/if}}
-        {{ if data["rank"].indexOf("A") === -1 && data["rank"].indexOf("B") === -1 && data["rank"].indexOf("S") ===
-        -1 && data["rank"].indexOf("ACE") === -1 }}
-        <div class="rank">
-            <div class="title" style="color: rgb(7, 126, 195);">{{ data["rank"] }}</div>
-            <div class="dps" style="color: rgb(189, 218, 255);">{{ data["dps"] }}</div>
-            <div class="time" style="color: rgb(189, 218, 255);">{{ data["tm"] }}</div>
-            <div class="total" style="color: rgb(189, 218, 255);">{{ data["total"] }}</div>
-        </div>
-        {{/if}}
-         <div id="pie"></div>
-<!--        <p>-->
-<!--            <canvas id="canvas_circle" width="400" height="250"-->
-<!--                    style="margin-top: 30px;margin-left: -40px;">-->
-<!--                浏览器不支持canvas-->
-<!--            </canvas>-->
-<!--        </p>-->
+<div id="container" class="{{elemKey}}"><div class="bgimg"></div><div class="bgmask"></div><div class="body">
+  <div class="head">
+    <img class="splash" src="{{splash}}">
+    <div class="l">
+      <div class="uid">UID {{data.uid}}</div>
+      <div class="title">队伍伤害</div>
+      <div class="team">{{each avatarList a i}}{{if i}} / {{/if}}{{a.name}}{{/each}}</div>
+      <div class="big"><span class="dps">{{data.dps}}</span><span class="u">DPS · 手法{{data.custom ? '自定义' : '默认'}}</span></div>
     </div>
-    <div class="Avatars">
-        {{each data["avatars"] a}}
-        <div class="avatar">
-            <!--            <img class="char r{{ a['rarity'] }}" src="./{{ a['name'] }}/{{ a['icon'] }}.png">-->
-            <img class="char r{{ a['rarity'] }}" src="{{ a.face }}">
-            <div class="char-con c{{ a['cons'] }}"></div>
-            <div class="char-lvl">{{ a["level"] }}</div>
-            <!--            <img class="weapon r{{ a['weapon']['rarity'] }}" src="./weapon/{{ a['weapon']['icon'] }}.png">-->
-            <img class="weapon r{{ a['weapon']['rarity'] }}"
-                 src="{{miaoRes}}meta-gs/weapon/{{ a['weapon']['imgPath'] }}/icon.webp">
-            <div class="weapon-aff a{{ a['weapon']['affix'] }}"></div>
-            <div class="weapon-lvl">{{ a['weapon']['level'] }}</div>
-            <div class="arti">
-                {{each a["relicSet"] val key}}
-                <img class="arti s{{ val }}" src="{{miaoRes}}meta-gs/artifact/imgs/{{ key }}/1.webp" height="100%"
-                     width="100%">
-                {{/each}}
-            </div>
-            <div class="detail">
-                <div class="cp">{{ a["cp"] }}%</div>
-                <div class="cd">{{ a["cd"] }}%</div>
-                <div class="prop">
-                    <div class="value">{{ a["key_value"] }}</div>
-                    <div class="name">{{ a["key_prop"] }}</div>
-                </div>
-                <!--                <div class="recharge">{{ a["recharge"]["pct"] }}</div>-->
-                <div style="width: 33.33%;height: 50px;font-family: PanelNumFont; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <svg viewBox="0 0 25 25">
-                        <circle cx="12.5" cy="12.5" r="10" stroke="#ccc" stroke-width="5" fill="none"/>
-                        <circle id="{{a['name']}}" cx="12.5" cy="12.5" r="10" stroke="{{ result[a['name']]['color'] }}"
-                                stroke-width="5" fill="none"
-                                stroke-dasharray="0, 62.8" stroke-dashoffset="0" transform="rotate(-90 12.5 12.5)"/>
-                        <text x="12.5" y="13.75" text-anchor="middle" font-size="8" font-weight="bold" fill="{{ result[a['name']]['color'] }}"
-                              text-shadow="0 0 5px #9370DB">{{ a["recharge"]["pct"] }}
-                        </text>
-                    </svg>
-                    <div style="color: #4ce878"></div>
-                    <script>
-                        document.getElementById("{{a['name']}}").setAttribute("stroke-dasharray", `${(50 + (parseInt("{{ a['recharge']['pct'] }}".substring(0, "{{ a['recharge']['pct'] }}".length - 1))) / 2) / 100 * (2 * Math.PI * 10)}, ${(2 * Math.PI * 10)}`);
-                        document.getElementById("{{a['name']}}").setAttribute("stroke-dashoffset", (2 * Math.PI * 10) - (50 + (parseInt("{{ a['recharge']['pct'] }}".substring(0, "{{ a['recharge']['pct'] }}".length - 1))) / 2) / 100 * (2 * Math.PI * 10));
-                    </script>
-                </div>
-                <div class="same">{{ a["recharge"]["same"] }}</div>
-                <div class="diff">{{ a["recharge"]["diff"] }}</div>
-                <div class="talent {{ a['elem'] }}">
-                    {{each a["skills"] skill}}
-                    <div>
-                        <img src="{{miaoRes}}{{skill.icon}}">
-                        <span class="{{ skill['style'] }}">{{ skill["level"] }}</span>
-                    </div>
-                    {{/each}}
-                </div>
-            </div>
+    <div class="rank"><div class="r">{{data.rank}}</div><div class="k">伤害评级</div></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi card"><div class="v">{{data.total}}</div><div class="k">输出总伤</div></div>
+    <div class="kpi card"><div class="v">{{data.tm}}s</div><div class="k">输出轴长</div></div>
+    <div class="kpi card"><div class="v">{{data.damages.length}}</div><div class="k">伤害次数</div></div>
+    {{if maxHit}}<div class="kpi card"><div class="v">{{maxHit.crit}}</div><div class="k">最高一击 · {{maxHit.action}}</div></div>{{/if}}
+  </div>
+
+  <div class="sec card">
+    <h3>队伍与输出占比</h3>
+    <div class="stack">{{each share s}}<div style="width:{{s.pct}}%;background:{{s.color}}">{{if s.pct > 8}}{{s.char}} {{s.pct}}%{{/if}}</div>{{/each}}</div>
+    <div class="avs">
+      {{each avatarList a}}
+      <div class="av" style="--c: {{a.color}}">
+        <img class="face" src="{{a.face}}">
+        <div class="name">{{a.name}}</div>
+        <div class="meta">C{{a.cons}} · Lv{{a.level}} · 天赋 {{each a.skills s i}}{{if i}}/{{/if}}{{s.level}}{{/each}}</div>
+        <div class="gear">
+          <img src="{{miaoRes}}meta-gs/weapon/{{a.weapon.imgPath}}/icon.webp">
+          {{each a.relicSet v k}}<img src="{{miaoRes}}meta-gs/artifact/imgs/{{k}}/1.webp">{{/each}}
         </div>
-        {{/each}}
+        <div class="kv"><span>暴击 / 暴伤</span><b>{{a.cp}} / {{a.cd}}</b></div>
+        <div class="kv"><span>{{a.key_prop}}</span><b>{{a.key_value}}</b></div>
+        <div class="kv"><span>充能满足</span><b>{{a.recharge.pct}}</b></div>
+        <div class="kv"><span>输出占比</span><b>{{a.share}}%</b></div>
+      </div>
+      {{/each}}
     </div>
-<!--    <br>-->
-<!--    <div style="background-color: #1179b11a;backdrop-filter: blur(5px);border-radius: 60px">-->
-<!--        {{each data["avatars"] a}}-->
-<!--        <div style="width: 230px;height:230px; display: inline-block;">-->
-<!--            <svg viewBox="0 0 25 25">-->
-<!--                <circle cx="12.5" cy="12.5" r="10" stroke="#ccc" stroke-width="2.5" fill="none"/>-->
-<!--                <circle id="{{a['name']}}" cx="12.5" cy="12.5" r="10" stroke="rgba(29, 198, 237, 0.42)"-->
-<!--                        stroke-width="2.5" fill="none"-->
-<!--                        stroke-dasharray="0, 62.8" stroke-dashoffset="0" transform="rotate(-90 12.5 12.5)"/>-->
-<!--                <text x="12.5" y="13.75" text-anchor="middle" font-size="3" font-weight="bold" fill="#5a15e5"-->
-<!--                      text-shadow="0 0 5px #9370DB">{{ a["name"] }}:{{ a["recharge"]["pct"] }}-->
-<!--                </text>-->
-<!--            </svg>-->
-<!--            <script>-->
-<!--                document.getElementById("{{a['name']}}").setAttribute("stroke-dasharray", `${(50 + (parseInt("{{ a['recharge']['pct'] }}".substring(0, "{{ a['recharge']['pct'] }}".length - 1))) / 2) / 100 * (2 * Math.PI * 10)}, ${(2 * Math.PI * 10)}`);-->
-<!--                document.getElementById("{{a['name']}}").setAttribute("stroke-dashoffset", (2 * Math.PI * 10) - (50 + (parseInt("{{ a['recharge']['pct'] }}".substring(0, "{{ a['recharge']['pct'] }}".length - 1))) / 2) / 100 * (2 * Math.PI * 10));-->
-<!--            </script>-->
-<!--        </div>-->
-<!--        {{/each}}-->
-<!--    </div>-->
-    <div class="Actions{{ if data.custom }} custom{{/if}}">
-        <div class="title"></div>
-        <div class="act">
-            {{each data["actions"] action}}
-            <div>{{ action }}</div>
-            {{/each}}
-        </div>
+  </div>
+
+  <div class="sec card">
+    <h3>伤害时间分布<small>每秒期望伤害，按角色堆叠</small></h3>
+    <div class="tl">{{each timeline b}}<div class="col">{{each b.segs s}}<i style="height:{{s.h}}%;background:{{s.color}}"></i>{{/each}}</div>{{/each}}</div>
+    <div class="tlx">{{each timeline b}}<span>{{b.t}}</span>{{/each}}</div>
+    <div class="lg">{{each share s}}<span><i style="background:{{s.color}}"></i>{{s.char}}</span>{{/each}}{{if hasOther}}<span><i style="background:#9aa3b2"></i>反应 / 其他</span>{{/if}}</div>
+  </div>
+
+  <div class="sec card">
+    <h3>操作手法<small>{{data.custom ? '小助手按自定义手法实际执行的动作' : '默认手法可能并非最优，可在队伍后接手法自定义'}}</small></h3>
+    <div class="chips">{{each data.actions a}}<span class="{{a=='跳跃'||a=='冲刺'||a.indexOf('等待')==0 ? 'k' : ''}}">{{a}}</span>{{/each}}</div>
+  </div>
+
+  <div class="sec card">
+    <h3>伤害过程<small>以 90 级怪物为基准，总伤与 DPS 为 1.25 倍期望伤害</small></h3>
+    <div class="dmg">
+      {{each dmgCols col}}
+      <table>
+        <tr><th>时间</th><th>动作</th><th>暴击</th><th>期望</th></tr>
+        {{each col d}}<tr class="{{maxHit && d[1]==maxHit.action && d[0]==maxHit.time ? 'hot' : ''}}"><td>{{d[0]}}</td><td><i style="background:{{rowColor[d[1]]}}"></i>{{d[1]}}</td><td>{{d[2]}}</td><td>{{d[4]}}</td></tr>{{/each}}
+      </table>
+      {{/each}}
     </div>
-    <ul class="Damages">
-        <li class="title"></li>
-        <li class="head">
-            <!-- use css to fill this -->
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-        </li>
-        {{each data["damages"] damage}}
-        <li class="dmg">
-            <div>{{ damage[0] }}</div>
-            <div>{{ damage[1] }}</div>
-            <div>{{ damage[2] }}</div>
-            <div>{{ damage[3] }}</div>
-            <div>{{ damage[4] }}</div>
-        </li>
-        {{/each}}
-    </ul>
-    <ul class="Buffs">
-        <li class="title"></li>
-        {{each data["buffs"] item}}
-        <li class="buff">
-            <div>{{ item[0] }}</div>
-            <div>{{ item[1] }}</div>
-            <div>{{ item[2] }}</div>
-        </li>
-        {{/each}}
-    </ul>
-    <div class="copyright">
-        TeamDamage-Plugin × Data from Teyvat × Prototype by Claude
-    </div>
-</div>
+  </div>
+
+  <div class="sec card buffs">
+    <h3>Buff 情况</h3>
+    {{each data.buffs b}}<div class="it"><span class="t">{{b[0]}}s</span><span class="n">{{b[1]}}</span><span>{{b[2]}}</span></div>{{/each}}
+  </div>
+  <div class="foot">TeamDamage-Plugin × Data from 提瓦特小助手</div>
+</div></div>
 </body>
-<!--<meta charset="gbk">-->
-<!--<script>-->
-<!--    function drawCircle(canvasId, data_arr, color_arr, text_arr) {-->
-<!--        const c = document.getElementById(canvasId);-->
-<!--        const ctx = c.getContext("2d");-->
-<!--        const radius = c.height / 2 - 20; //半径-->
-<!--        const ox = radius + 20, oy = radius + 20; //圆心-->
-<!--        const width = 30, height = 10; //图例宽和高-->
-<!--        const posX = ox * 2 + 20, posY = 30;   //-->
-<!--        const textX = posX + width + 5, textY = posY + 10;-->
-<!--        let startAngle = 0; //起始弧度-->
-<!--        let endAngle = 0;   //结束弧度-->
-<!--        for (let i = 0; i < data_arr.length; i++) {//绘制饼图-->
-<!--            endAngle = endAngle + data_arr[i] * Math.PI * 2; //结束弧度-->
-<!--            ctx.fillStyle = color_arr[i];-->
-<!--            ctx.beginPath();-->
-<!--            ctx.moveTo(ox, oy); //移动到到圆心-->
-<!--            ctx.arc(ox, oy, radius, startAngle, endAngle, false);-->
-<!--            ctx.closePath();-->
-<!--            ctx.fill();-->
-<!--            startAngle = endAngle; //设置起始弧度-->
-<!--            ctx.fillStyle = color_arr[i];//绘制比例图及文字-->
-<!--            ctx.fillRect(posX - 50, posY + 20 * i, width, height);-->
-<!--            ctx.moveTo(posX - 50, posY + 20 * i);-->
-<!--            ctx.font = 'bold 20px 微软雅黑';    //斜体 30像素 微软雅黑字体-->
-<!--            ctx.fillStyle = color_arr[i]; //"#000000";-->
-<!--            const percent = text_arr[i] + "：" + 100 * data_arr[i] + "%";-->
-<!--            ctx.fillText(percent, textX - 50, textY + 20 * i);-->
-<!--        }-->
-<!--    }-->
-
-<!--    async function init() {-->
-<!--        const percent = `{{Bing.percent}}`-->
-<!--        const Color = `{{Bing.RoleColor}}`-->
-<!--        const Char = `{{Bing.NameChar}}`-->
-<!--        const PercentArr = JSON.parse(percent.replace(/&#34;/g, '"'));-->
-<!--        const ColorArr = JSON.parse(Color.replace(/&#34;/g, '"'));-->
-<!--        const NameArr = JSON.parse(Char.replace(/&#34;/g, '"'));-->
-<!--        drawCircle("canvas_circle", PercentArr, ColorArr, NameArr);-->
-<!--    }-->
-
-<!--    window.onload = init;-->
-<!--</script>-->
-<script type="text/javascript" src="{{pluResPath}}g2plot.min.js"></script>
-<script>
-    const {Pie} = G2Plot;
-    const Color = `{{Bing.RoleColor}}`
-    const ColorArr = JSON.parse(Color.replace(/&#34;/g, '"'));
-    // const NameArr =
-    let data = `{{RoleData}}`
-    data=JSON.parse(data.replace(/&#34;/g, '"'));
-    const piePlot = new Pie("pie", {
-        renderer: "svg",
-        animation: false,
-        data: data,
-        padding: [-10, 0, 20, 0],
-        angleField: "damage",
-        colorField: "char",
-        radius: 0.8,
-        color: ColorArr,
-        label: {
-            type: "inner",
-            autoRotate: false,
-            style: {
-                textAlign: "center",
-                fill: "#000",
-                fontSize: 20,
-                fontFamily: "PanelNumFont",
-            },
-            formatter: ({char, damage, percent}) => {
-                percent = (percent * 100).toFixed(0);
-                return percent > 6 ? `${char}\n${damage}W` : "";
-            },
-        },
-        legend: false,
-    });
-    piePlot.render();
-</script>
 </html>

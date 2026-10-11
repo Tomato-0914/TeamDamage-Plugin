@@ -127,8 +127,6 @@ async function simpleTeamDamageRes (raw, rolesData) {
     dps: raw.zdl_result,
     tm,
     total,
-    pie_data: JSON.stringify(pieData),
-    pie_color: JSON.stringify(pieColor),
     pie_data2: pieData,
     pie_color2: pieColor,
     avatars,
