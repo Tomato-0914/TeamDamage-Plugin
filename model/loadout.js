@@ -25,7 +25,14 @@ const toNum = (v, max) => (v === '满' ? max : v in CN_NUM ? CN_NUM[v] : Number(
 
 const WEAPON_TYPE_CN = { sword: '单手剑', claymore: '双手剑', polearm: '长柄武器', bow: '弓', catalyst: '法器' }
 
-export const LOADOUT_USAGE = '支持：换满命 / 换六命 / 换精五 / 换满精 / 换天赋101313 / 换90级 / 换武器名（护摩、讨龙、专武）/ 换4千岩 / 换2追忆2如雷'
+/** 元素：中文 ↔ miao key ↔ 小助手的元素伤害字段 */
+const ELEM_KEY = { 风: 'anemo', 岩: 'geo', 雷: 'electro', 草: 'dendro', 水: 'hydro', 火: 'pyro', 冰: 'cryo' }
+const ELEM_CN = lodash.invert(ELEM_KEY)
+const ELEM_DMG = { pyro: 'fire_dmg', hydro: 'water_dmg', cryo: 'ice_dmg', electro: 'thunder_dmg', anemo: 'wind_dmg', geo: 'rock_dmg', dendro: 'grass_dmg' }
+/** 旅行者 3/5 命加天赋的顺序随元素变化（与 miao Character.talentCons 一致） */
+const travelerTalentCons = (elem) => (['dendro', 'hydro', 'pyro'].includes(elem) ? { e: 3, q: 5 } : { e: 5, q: 3 })
+
+export const LOADOUT_USAGE = '支持：换满命 / 换六命 / 换精五 / 换满精 / 换天赋101313 / 换90级 / 换武器名（护摩、讨龙、专武）/ 换4千岩 / 换2追忆2如雷 / 旅行者换雷'
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0)
 const pct = (v) => `${Math.round(num(v) * 10) / 10}%`
@@ -118,6 +125,12 @@ function parseLoadoutMods (list, charNames) {
       else unknown.push(`${item}（没查到专武，请直接写武器名）`)
       continue
     }
+    // 旅行者换元素：换雷 / 换雷元素 / 换雷主
+    m = item.match(/^([风岩雷草水火冰])(?:元素|主|系)?$/)
+    if (m) {
+      mods.elem = ELEM_KEY[m[1]]
+      continue
+    }
     // 武器放在套装前：武器名更具体，「绝缘」这类只有套装叫得出的词会落到下面
     const weapon = Weapon.get(item)
     if (weapon?.name) {
@@ -182,12 +195,15 @@ function applyWeaponBonus (roleData, key, value, sign) {
 
 /**
  * 把换装应用到 role_data（发给小助手）和 panel（出图用，covProfileroleData 的结构）
- * @returns {{labels: string[], warns: string[]}} labels 用于提示消息
+ * @returns {{labels: string[], warns: string[], elem?: string}} labels 用于提示消息；elem 为旅行者换后的元素
  */
 export function applyLoadout (roleData, panel, mods, profile) {
   const labels = []
   const warns = []
   if (!mods || lodash.isEmpty(mods)) return { labels, warns }
+  let elem
+  // 旅行者换了元素时，天赋由下面的换元素逻辑按新元素统一重算
+  const switchElem = !!mods.elem && !!profile.char?.isTraveler && mods.elem !== profile.elem
 
   if (mods.cons !== undefined) {
     const oldCons = num(roleData.role_class)
@@ -195,7 +211,7 @@ export function applyLoadout (roleData, panel, mods, profile) {
     panel.cons = mods.cons
     labels.push(`${mods.consAlias ?? mods.cons}命`)
     // 3/5 命的天赋 +3：服务端不会自己加，没指定天赋时按命座变化补上或撤掉
-    if (!mods.talent) {
+    if (!mods.talent && !switchElem) {
       let changed = false
       const talentCons = profile.char?.talentCons || {}
       for (const [key, field] of [['e', 'ability2'], ['q', 'ability3']]) {
@@ -207,6 +223,33 @@ export function applyLoadout (roleData, panel, mods, profile) {
         changed = true
       }
       if (changed) labels.push(`天赋${roleData.ability1}/${roleData.ability2}/${roleData.ability3}`)
+    }
+  }
+
+  // 旅行者换元素：元素伤害加成挪到新元素（视为换了对应元素杯，小助手直接用传入的加成值）
+  if (mods.elem) {
+    if (!profile.char?.isTraveler) {
+      warns.push(`只有旅行者能换元素，「换${ELEM_CN[mods.elem]}」已跳过`)
+    } else if (switchElem) {
+      elem = mods.elem
+      const oldField = ELEM_DMG[profile.elem]
+      const newField = ELEM_DMG[elem]
+      if (oldField && newField) {
+        roleData[newField] = roleData[oldField]
+        roleData[oldField] = pct(0)
+      }
+      panel.element = ELEM_CN[elem]
+      labels.push(`${ELEM_CN[elem]}元素`)
+      // 3/5 命加 E 还是 Q 随元素变化，没指定天赋时按原始等级重新算
+      if (!mods.talent) {
+        const cons = num(roleData.role_class)
+        const tc = travelerTalentCons(elem)
+        roleData.ability2 = clampTalent(num(profile.talent?.e?.original || roleData.ability2) + (cons >= tc.e ? 3 : 0))
+        roleData.ability3 = clampTalent(num(profile.talent?.q?.original || roleData.ability3) + (cons >= tc.q ? 3 : 0))
+        if (roleData.ability2 !== num(profile.talent?.e?.level) || roleData.ability3 !== num(profile.talent?.q?.level)) {
+          labels.push(`天赋${roleData.ability1}/${roleData.ability2}/${roleData.ability3}`)
+        }
+      }
     }
   }
 
@@ -266,5 +309,5 @@ export function applyLoadout (roleData, panel, mods, profile) {
     labels.push(mods.artis.map(s => `${s.num}${s.name}`).join('+'))
   }
 
-  return { labels, warns }
+  return { labels, warns, elem }
 }

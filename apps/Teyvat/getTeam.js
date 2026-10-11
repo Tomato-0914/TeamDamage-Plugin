@@ -174,28 +174,31 @@ export async function team(e, tokens, uid) {
       NoDataName.push(char)
       continue
     }
-    // 小助手的旅行者写作「旅行者 + 元素」，元素取面板里当前的元素（面板只存最后一次更新时的元素）
+    const panel = await covProfileroleData(profile)
+    const teyvatData = await covProfileTeyvatData(profile, uid)
+    let loadoutElem
+    if (loadouts[char]) {
+      const {labels, warns, elem} = applyLoadout(teyvatData, panel, loadouts[char], profile)
+      if (labels.length) loadoutTips.push(`${char}：${labels.join(' / ')}`)
+      loadoutWarns.push(...warns)
+      loadoutElem = elem
+    }
+    // 小助手的旅行者写作「旅行者 + 元素」；元素取换装指定的，否则取面板里当前的（面板只存最后一次更新时的元素）
     let teyvatName = char
     if (v.isTraveler) {
-      const elemCn = attrsKeys[profile.elem]
-      if (wantTravelerElem && wantTravelerElem !== profile.elem) {
-        await e.reply(`面板里的旅行者是${elemCn}元素，想算${attrsKeys[wantTravelerElem]}主的话，请在游戏里切换到${attrsKeys[wantTravelerElem]}元素后 #更新面板`, true)
+      const elem = loadoutElem || profile.elem
+      if (!loadoutElem && wantTravelerElem && wantTravelerElem !== profile.elem) {
+        const want = attrsKeys[wantTravelerElem]
+        await e.reply(`面板里的旅行者是${attrsKeys[profile.elem]}元素，想算${want}主的话，请在游戏里切换到${want}元素后 #更新面板\n也可以写「旅行者换${want}」，用当前面板估算`, true)
         return true
       }
-      if (profile.elem === 'cryo') {
+      if (elem === 'cryo') {
         await e.reply('提瓦特小助手暂不支持冰主的伤害计算', true)
         return true
       }
-      teyvatName = TRAVELER + elemCn
+      teyvatName = TRAVELER + attrsKeys[elem]
     }
-    const panel = await covProfileroleData(profile)
-    const teyvatData = await covProfileTeyvatData(profile, uid)
     teyvatData.role = teyvatName
-    if (loadouts[char]) {
-      const {labels, warns} = applyLoadout(teyvatData, panel, loadouts[char], profile)
-      if (labels.length) loadoutTips.push(`${char}：${labels.join(' / ')}`)
-      loadoutWarns.push(...warns)
-    }
     rolesData[teyvatName] = panel
     role_data.push(teyvatData)
   }
