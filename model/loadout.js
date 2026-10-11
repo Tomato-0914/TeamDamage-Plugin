@@ -12,7 +12,13 @@
 import lodash from 'lodash'
 import { ArtifactSet, Character, Weapon } from '../../miao-plugin/models/index.js'
 
-const CN_NUM = { 零: 0, 〇: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6 }
+const CN_NUM = { 零: 0, 〇: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 }
+
+/**
+ * 超过 6 命的写法按突破等级折算：95 级要 1 个无主的命星，100 级再要 2 个，共 3 个
+ * 所以 7 命 = 6 命 + 95 级，9 命 = 6 命 + 100 级，没有 8 命
+ */
+const EXTRA_CONS_LEVEL = { 7: 95, 9: 100 }
 
 /** 单个数字（阿拉伯或中文）转数值，「满」取 max */
 const toNum = (v, max) => (v === '满' ? max : v in CN_NUM ? CN_NUM[v] : Number(v))
@@ -71,10 +77,19 @@ function parseLoadoutMods (list, charNames) {
   const mods = {}
   const unknown = []
   for (const item of list) {
-    // 命座：六命 / 6命 / 满命 / 命座6 / 命座六 / c6
-    let m = item.match(/^([0-6零〇一二三四五六满])命座?$/) || item.match(/^命座([0-6零〇一二三四五六满])$/) || item.match(/^c([0-6])$/i)
+    // 命座：六命 / 6命 / 满命 / 命座6 / 命座六 / c6；7 命、9 命见 EXTRA_CONS_LEVEL
+    let m = item.match(/^([0-9零〇一二三四五六七八九满])命座?$/) || item.match(/^命座([0-9零〇一二三四五六七八九满])$/) || item.match(/^c([0-9])$/i)
     if (m) {
-      mods.cons = toNum(m[1], 6)
+      const cons = toNum(m[1], 6)
+      if (cons <= 6) {
+        mods.cons = cons
+        delete mods.consAlias
+      } else if (EXTRA_CONS_LEVEL[cons]) {
+        mods.cons = 6
+        mods.consAlias = cons
+      } else {
+        unknown.push(`${item}（没有${cons}命：7 命 = 95 级，9 命 = 100 级）`)
+      }
       continue
     }
     // 精炼：精5 / 精五 / 精炼5 / 满精 / 5精 / 五精 / r5
@@ -116,6 +131,8 @@ function parseLoadoutMods (list, charNames) {
     }
     unknown.push(item)
   }
+  // 7/9 命折算的等级，单独写了等级时以等级为准
+  if (mods.consAlias && mods.level === undefined) mods.level = EXTRA_CONS_LEVEL[mods.consAlias]
   return { mods, unknown }
 }
 
@@ -176,7 +193,7 @@ export function applyLoadout (roleData, panel, mods, profile) {
     const oldCons = num(roleData.role_class)
     roleData.role_class = mods.cons
     panel.cons = mods.cons
-    labels.push(`${mods.cons}命`)
+    labels.push(`${mods.consAlias ?? mods.cons}命`)
     // 3/5 命的天赋 +3：服务端不会自己加，没指定天赋时按命座变化补上或撤掉
     if (!mods.talent) {
       let changed = false
