@@ -12,11 +12,14 @@
 import lodash from 'lodash'
 import { ArtifactSet, Character, Weapon } from '../../miao-plugin/models/index.js'
 
-const CN_NUM = { 零: 0, 〇: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6 }
+const CN_NUM = { 零: 0, 〇: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6 }
+
+/** 单个数字（阿拉伯或中文）转数值，「满」取 max */
+const toNum = (v, max) => (v === '满' ? max : v in CN_NUM ? CN_NUM[v] : Number(v))
 
 const WEAPON_TYPE_CN = { sword: '单手剑', claymore: '双手剑', polearm: '长柄武器', bow: '弓', catalyst: '法器' }
 
-export const LOADOUT_USAGE = '支持：换六命 / 换精5 / 换天赋101313 / 换90级 / 换武器名（护摩、讨龙、专武）/ 换4千岩 / 换2追忆2如雷'
+export const LOADOUT_USAGE = '支持：换满命 / 换六命 / 换精五 / 换满精 / 换天赋101313 / 换90级 / 换武器名（护摩、讨龙、专武）/ 换4千岩 / 换2追忆2如雷'
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0)
 const pct = (v) => `${Math.round(num(v) * 10) / 10}%`
@@ -68,14 +71,16 @@ function parseLoadoutMods (list, charNames) {
   const mods = {}
   const unknown = []
   for (const item of list) {
-    let m = item.match(/^(?:命座)?([0-6零〇一二三四五六])命$/) || item.match(/^命座([0-6])$/)
+    // 命座：六命 / 6命 / 满命 / 命座6 / 命座六 / c6
+    let m = item.match(/^([0-6零〇一二三四五六满])命座?$/) || item.match(/^命座([0-6零〇一二三四五六满])$/) || item.match(/^c([0-6])$/i)
     if (m) {
-      mods.cons = m[1] in CN_NUM ? CN_NUM[m[1]] : Number(m[1])
+      mods.cons = toNum(m[1], 6)
       continue
     }
-    m = item.match(/^(?:精炼?|r)([1-5])(?:阶)?$/i) || item.match(/^([1-5])精(?:炼)?$/)
+    // 精炼：精5 / 精五 / 精炼5 / 满精 / 5精 / 五精 / r5
+    m = item.match(/^(?:精炼?|r)([1-5一二两三四五满])阶?$/i) || item.match(/^([1-5一二两三四五满])精炼?$/)
     if (m) {
-      mods.affix = Number(m[1])
+      mods.affix = toNum(m[1], 5)
       continue
     }
     m = item.match(/^(?:天赋|技能)(.+)$/)
