@@ -71,19 +71,33 @@ export async function team(e, tokens, uid) {
     teamlist = inferTeam(comboTokens, resolveName)
     inferred = teamlist.length > 0
   }
-  // 单个带换装的队员（香菱换六命）不是队伍简写
-  if (teamlist.length === 1 && !inferred && !(teamlist[0].includes('换') && resolveName(parseMember(teamlist[0]).name))) {
-    const preset = findPreset(teamlist[0])
-    if (preset) {
-      // 指令里写了手法优先用指令的，否则用预设手法，预设也没写则走小助手默认手法
-      if (!comboTokens.length && preset.combo) {
-        comboTokens = splitTokens(preset.combo)
-        presetCombo = preset.name
+  // 队伍简写，后面可跟临时换装：#队伍伤害雷九 雷神换六命 班尼特换精5
+  // 带换装的队员（香菱换六命）本身不是简写；跟了换装时开头若是角色名，按普通队伍处理
+  const isLoadoutMember = t => t.includes('换') && !!resolveName(parseMember(t).name)
+  const [head = '', ...overrides] = teamlist
+  const presetCandidate = !inferred && head && !isLoadoutMember(head) && overrides.every(isLoadoutMember) &&
+    (!overrides.length || !resolveName(head))
+  const preset = presetCandidate ? findPreset(head) : null
+  if (preset) {
+    const chars = [...preset.chars]
+    for (const t of overrides) {
+      const std = resolveName(parseMember(t).name)
+      const idx = chars.findIndex(c => resolveName(parseMember(c).name) === std)
+      if (idx === -1) {
+        await e.reply(`「${std}」不在队伍预设「${preset.name}」里（${chars.map(c => parseMember(c).name).join('、')}）`, true)
+        return true
       }
-      teamlist = preset.chars
-    } else {
-      await e.reply(`暂未发现[${teamlist[0]}]简写\n尝试识别为单人~`, true)
+      // 接在预设自带的换装后面，同一项以指令里写的为准
+      chars[idx] += t.slice(t.indexOf('换'))
     }
+    // 指令里写了手法优先用指令的，否则用预设手法，预设也没写则走小助手默认手法
+    if (!comboTokens.length && preset.combo) {
+      comboTokens = splitTokens(preset.combo)
+      presetCombo = preset.name
+    }
+    teamlist = chars
+  } else if (presetCandidate && !overrides.length) {
+    await e.reply(`暂未发现[${head}]简写\n尝试识别为单人~`, true)
   } else if (teamlist.length === 0) {
     await e.reply(`请指定您要计算的队伍喵~\n\n${COMBO_USAGE}`, true)
     return true
