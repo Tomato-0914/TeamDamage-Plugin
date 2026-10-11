@@ -25,65 +25,65 @@
   .head { position: relative; height: 230px; overflow: hidden; }
   .head .splash { position: absolute; right: -40px; top: -40px; height: 360px; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 40%); }
   .head .l { position: absolute; left: 32px; top: 26px; }
-  .head .uid { font-size: 16px; color: var(--sub); }
-  .head .title { font-size: 30px; font-weight: 700; margin-top: 4px; }
-  .head .team { font-size: 17px; color: #5d5866; margin-top: 4px; }
+  .head .uid { font-size: 18px; color: var(--sub); }
+  .head .title { font-size: 34px; font-weight: 700; margin-top: 4px; }
+  .head .team { font-size: 21px; color: #5d5866; margin-top: 4px; }
   .head .big { display: flex; align-items: baseline; gap: 14px; margin-top: 18px; }
   .head .big .dps { font-family: "NumFont"; font-size: 64px; color: var(--accent); line-height: 1; }
-  .head .big .u { font-size: 18px; color: var(--sub); }
+  .head .big .u { font-size: 21px; color: var(--sub); }
   .head .rank { position: absolute; left: 520px; top: 34px; width: 92px; height: 92px; border-radius: 50%; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 16px rgba(var(--accent-rgb),0.25); display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .head .rank .r { font-family: "NumFont"; font-size: 36px; color: var(--accent); line-height: 1; }
-  .head .rank .k { font-size: 12px; color: var(--sub); margin-top: 4px; }
+  .head .rank .k { font-size: 14px; color: var(--sub); margin-top: 4px; }
 
   .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: -26px 20px 14px; position: relative; }
   .kpi { padding: 12px 16px; }
-  .kpi .v { font-family: "NumFont"; font-size: 26px; }
-  .kpi .k { font-size: 13px; color: var(--sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .v { font-family: "NumFont"; font-size: 30px; }
+  .kpi .k { font-size: 16px; color: var(--sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .sec { margin: 0 20px 14px; padding: 16px 18px; }
-  .sec h3 { margin: 0 0 12px; font-size: 20px; display: flex; align-items: baseline; gap: 10px; }
+  .sec h3 { margin: 0 0 12px; font-size: 24px; display: flex; align-items: baseline; gap: 10px; }
   .sec h3::before { content: ""; width: 5px; height: 18px; border-radius: 3px; background: var(--accent); align-self: center; }
-  .sec h3 small { font-size: 13px; font-weight: 400; color: var(--sub); }
+  .sec h3 small { font-size: 16px; font-weight: 400; color: var(--sub); }
 
-  .stack { display: flex; height: 26px; border-radius: 13px; overflow: hidden; }
-  .stack > div { display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; }
+  .stack { display: flex; height: 32px; border-radius: 16px; overflow: hidden; }
+  .stack > div { display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; white-space: nowrap; overflow: hidden; }
 
   .avs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
   .av { border: 1px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.35); border-radius: 14px; padding: 12px; position: relative; overflow: hidden; }
   .av::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--c); }
-  .av .face { width: 72px; height: 72px; border-radius: 50%; display: block; margin: 4px auto 6px; background: var(--soft); object-fit: cover; }
-  .av .name { text-align: center; font-size: 18px; }
-  .av .meta { text-align: center; font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .av .face { width: 80px; height: 80px; border-radius: 50%; display: block; margin: 4px auto 6px; background: var(--soft); object-fit: cover; }
+  .av .name { text-align: center; font-size: 21px; }
+  .av .meta { text-align: center; font-size: 14px; color: var(--sub); margin-top: 2px; }
   .av .gear { display: flex; justify-content: center; gap: 6px; margin: 8px 0; }
-  .av .gear img { width: 36px; height: 36px; border-radius: 8px; background: var(--soft); }
-  .av .kv { display: flex; justify-content: space-between; font-size: 12px; color: var(--sub); padding: 3px 2px; border-top: 1px dashed var(--line); }
-  .av .kv b { font-family: "NumFont"; font-weight: 400; color: var(--ink); font-size: 14px; }
+  .av .gear img { width: 42px; height: 42px; border-radius: 8px; background: var(--soft); }
+  .av .kv { display: flex; justify-content: space-between; font-size: 15px; color: var(--sub); padding: 3px 2px; border-top: 1px dashed var(--line); }
+  .av .kv b { font-family: "NumFont"; font-weight: 400; color: var(--ink); font-size: 17px; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chips span { font-size: 14px; padding: 3px 9px; border-radius: 7px; background: rgba(255,255,255,0.6); color: #3f3a46; }
+  .chips span { font-size: 17px; padding: 4px 10px; border-radius: 7px; background: rgba(255,255,255,0.6); color: #3f3a46; }
   .chips span.k { background: rgba(var(--accent-rgb),0.16); color: var(--accent); }
 
   .tl { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: 0 2px; border-bottom: 1px solid var(--line); }
   .tl .col { flex: 1; height: 100%; display: flex; flex-direction: column-reverse; }
   .tl .col i { display: block; width: 100%; }
   .tlx { display: flex; gap: 4px; padding: 4px 2px 0; }
-  .tlx span { flex: 1; text-align: center; font-size: 11px; color: var(--sub); font-family: "NumFont"; }
-  .lg { display: flex; gap: 16px; font-size: 13px; color: var(--sub); margin-top: 10px; }
-  .lg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+  .tlx span { flex: 1; text-align: center; font-size: 14px; color: var(--sub); font-family: "NumFont"; }
+  .lg { display: flex; flex-wrap: wrap; gap: 18px; font-size: 16px; color: var(--sub); margin-top: 10px; }
+  .lg i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; }
 
   .dmg { display: flex; gap: 16px; }
-  .dmg table { flex: 1; border-collapse: collapse; font-size: 13px; align-self: flex-start; }
-  .dmg th { color: var(--sub); font-weight: 400; text-align: right; padding: 5px 6px; background: rgba(255,255,255,0.45); }
+  .dmg table { flex: 1; border-collapse: collapse; font-size: 16px; align-self: flex-start; }
+  .dmg th { color: var(--sub); font-weight: 400; text-align: right; padding: 6px 6px; background: rgba(255,255,255,0.45); }
   .dmg th:nth-child(2), .dmg td:nth-child(2) { text-align: left; }
-  .dmg td { padding: 3px 6px; text-align: right; font-family: "NumFont"; border-bottom: 1px solid var(--line); }
+  .dmg td { padding: 4px 6px; text-align: right; font-family: "NumFont"; border-bottom: 1px solid var(--line); }
   .dmg td:nth-child(2) { font-family: "PanelFont"; white-space: nowrap; }
-  .dmg td i { display: inline-block; width: 4px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .dmg td i { display: inline-block; width: 4px; height: 15px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
   .dmg tr.hot td { color: var(--accent); background: rgba(var(--accent-rgb),0.14); }
 
-  .buffs .it { display: flex; font-size: 14px; padding: 6px 0; border-bottom: 1px solid var(--line); }
-  .buffs .t { flex: 0 0 56px; font-family: "NumFont"; color: var(--sub); }
-  .buffs .n { flex: 0 0 150px; color: var(--accent); }
-  .foot { text-align: center; font-size: 12px; color: var(--sub); }
+  .buffs .it { display: flex; font-size: 17px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .buffs .t { flex: 0 0 66px; font-family: "NumFont"; color: var(--sub); }
+  .buffs .n { flex: 0 0 180px; color: var(--accent); }
+  .foot { text-align: center; font-size: 14px; color: var(--sub); }
 </style>
 </head>
 <body>
@@ -108,17 +108,18 @@
 
   <div class="sec card">
     <h3>队伍与输出占比</h3>
-    <div class="stack">{{each share s}}<div style="width:{{s.pct}}%;background:{{s.color}};color:{{s.text}}">{{if s.pct > 8}}{{s.char}} {{s.pct}}%{{/if}}</div>{{/each}}</div>
+    <div class="stack">{{each share s}}<div style="width:{{s.pct}}%;background:{{s.color}};color:{{s.text}}">{{if s.pct >= 18}}{{s.char}} {{s.pct}}%{{else if s.pct >= 7}}{{s.pct}}%{{/if}}</div>{{/each}}</div>
     <div class="avs">
       {{each avatarList a}}
       <div class="av" style="--c: {{a.color}}">
         <img class="face" src="{{a.face}}">
         <div class="name">{{a.name}}</div>
-        <div class="meta">C{{a.cons}} · Lv{{a.level}} · 天赋 {{each a.skills s i}}{{if i}}/{{/if}}{{s.level}}{{/each}}</div>
+        <div class="meta">C{{a.cons}} · Lv{{a.level}}</div>
         <div class="gear">
           <img src="{{miaoRes}}meta-gs/weapon/{{a.weapon.imgPath}}/icon.webp">
           {{each a.relicSet v k}}<img src="{{miaoRes}}meta-gs/artifact/imgs/{{k}}/1.webp">{{/each}}
         </div>
+        <div class="kv"><span>天赋</span><b>{{each a.skills s i}}{{if i}}/{{/if}}{{s.level}}{{/each}}</b></div>
         <div class="kv"><span>暴击 / 暴伤</span><b>{{a.cp}} / {{a.cd}}</b></div>
         <div class="kv"><span>{{a.key_prop}}</span><b>{{a.key_value}}</b></div>
         <div class="kv"><span>充能满足</span><b>{{a.recharge.pct}}</b></div>
