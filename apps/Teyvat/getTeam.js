@@ -8,6 +8,7 @@ import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import {findPreset} from "../../model/teamPreset.js"
 import {pluginRoot, pluginName} from "../../model/path.js"
 import {COMBO_USAGE, inferTeam, parseCombo, splitTeamAndCombo, splitTokens} from "./combo.js"
+import {LOADOUT_USAGE, applyLoadout, parseMember} from "../../model/loadout.js"
 
 let cwd = process.cwd().replace(/\\/g, '/')
 /** 小助手请求头 */
@@ -70,7 +71,8 @@ export async function team(e, tokens, uid) {
     teamlist = inferTeam(comboTokens, resolveName)
     inferred = teamlist.length > 0
   }
-  if (teamlist.length === 1 && !inferred) {
+  // 单个带换装的队员（香菱换六命）不是队伍简写
+  if (teamlist.length === 1 && !inferred && !(teamlist[0].includes('换') && resolveName(parseMember(teamlist[0]).name))) {
     const preset = findPreset(teamlist[0])
     if (preset) {
       // 指令里写了手法优先用指令的，否则用预设手法，预设也没写则走小助手默认手法
@@ -93,21 +95,26 @@ export async function team(e, tokens, uid) {
     teamlist = teamlist.slice(0, 4)
   }
 
+  // 队员可带换装：香菱换六命换精5
   let teamarId = []
-  let errMsg = ''
-  try {
-    _.each(teamlist, v => {
-      let char_p_l = Character.get(v.split('(')[0].trim())
-      let char_p_t = _.clone(char_p_l)
-      if (!char_p_t) {
-        errMsg = `队伍中存在未能识别的角色：${v.split('(')[0].trim()}`
-        throw new Error()  
-      }
-      teamarId.push(char_p_t)
-    })
-  } catch (error) {
-    await e.reply(errMsg)
-    return
+  let loadouts = {}
+  for (const v of teamlist) {
+    const {name, mods, unknown} = parseMember(v.split('(')[0].trim())
+    const char = Character.get(name)
+    if (!char) {
+      await e.reply(`队伍中存在未能识别的角色：${name}`)
+      return true
+    }
+    if (unknown.length) {
+      await e.reply(`${char.name}的「换${unknown.join('换')}」看不懂\n${LOADOUT_USAGE}\n完整写法见 #队伍伤害帮助`, true)
+      return true
+    }
+    if (teamarId.some(c => c.id === char.id)) {
+      await e.reply(`队伍里重复出现了「${char.name}」`, true)
+      return true
+    }
+    teamarId.push(char)
+    if (!_.isEmpty(mods)) loadouts[char.name] = mods
   }
 
   if (teamarId.some(v => ['旅行者', '空', '荧', '萤'].includes(v.name))) {
@@ -129,6 +136,8 @@ export async function team(e, tokens, uid) {
   let rolesData = {}
   let role_data = []
   let NoDataName = []
+  let loadoutTips = []
+  let loadoutWarns = []
   let player = Player.create(uid)
   // role_data 的顺序即手法里的角色序号，必须按队伍顺序依次处理
   for (const v of teamarId) {
@@ -138,8 +147,15 @@ export async function team(e, tokens, uid) {
       NoDataName.push(char)
       continue
     }
-    rolesData[char] = await covProfileroleData(profile)
-    role_data.push(await covProfileTeyvatData(profile, uid))
+    const panel = await covProfileroleData(profile)
+    const teyvatData = await covProfileTeyvatData(profile, uid)
+    if (loadouts[char]) {
+      const {labels, warns} = applyLoadout(teyvatData, panel, loadouts[char], profile)
+      if (labels.length) loadoutTips.push(`${char}：${labels.join(' / ')}`)
+      loadoutWarns.push(...warns)
+    }
+    rolesData[char] = panel
+    role_data.push(teyvatData)
   }
 
   if (NoDataName.length > 0) {
@@ -148,8 +164,11 @@ export async function team(e, tokens, uid) {
   }
   let isData = teamarId.map(v => v.name).join('|')
   // 具体手法会画在结果图里，这里只标注用的是自定义还是默认手法
-  await e.reply(`UID${uid}：${isData}\n手法：[${custom ? '自定义' : '默认'}]`)
-  logger.info(logger.cyan(`[${pluginName}]队伍伤害[请求UID:${uid}]>>>${isData}${custom ? ` 手法:${JSON.stringify(custom.combo)}` : ''}`))
+  const tips = [`UID${uid}：${isData}`, `手法：[${custom ? '自定义' : '默认'}]`]
+  if (loadoutTips.length) tips.push(`换装：${loadoutTips.join('；')}`)
+  if (loadoutWarns.length) tips.push(`注意：${loadoutWarns.join('；')}`)
+  await e.reply(tips.join('\n'))
+  logger.info(logger.cyan(`[${pluginName}]队伍伤害[请求UID:${uid}]>>>${isData}${custom ? ` 手法:${JSON.stringify(custom.combo)}` : ''}${loadoutTips.length ? ` 换装:${loadoutTips.join('；')}` : ''}`))
 
   let TiwateBody = {uid, role_data, server: getServer(uid, true)}
   if (custom) TiwateBody.custom_combo = custom.combo

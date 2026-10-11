@@ -124,7 +124,9 @@ function splitToken (token, resolveName) {
  * @param {(name: string) => string|null} resolveName
  */
 export function splitTeamAndCombo (tokens, resolveName) {
-  const idx = tokens.findIndex((t) => WAIT_LIKE.test(t) || splitToken(t, resolveName))
+  // 带换装的队员（香菱换六命）一定是队伍，不参与手法识别
+  const isMember = (t) => t.indexOf('换') > 0 && !!resolveName(t.slice(0, t.indexOf('换')))
+  const idx = tokens.findIndex((t) => !isMember(t) && (WAIT_LIKE.test(t) || splitToken(t, resolveName)))
   if (idx === -1) return { teamTokens: tokens, comboTokens: [] }
   return { teamTokens: tokens.slice(0, idx), comboTokens: tokens.slice(idx) }
 }
@@ -205,5 +207,6 @@ export const COMBO_USAGE = [
   '也可只写手法，队伍按出场顺序自动识别：#队伍伤害 钟离长e,班尼特eq,香菱q,行秋qe',
   '动作：e / 短e / 长e / q / 重击(z/zj) / a(普攻，连写aaa=1~3段) / a1~a9(指定段数)',
   '跳跃(k) / 闪避(s)；等待(等0.5)',
-  '省略角色名则沿用上一个角色；可连写(班尼特eq、胡桃azk)、重复(a1*3、重击3次)'
+  '省略角色名则沿用上一个角色；可连写(班尼特eq、胡桃azk)、重复(a1*3、重击3次)',
+  '全部写法（含换装）发 #队伍伤害帮助 查看'
 ].join('\n')

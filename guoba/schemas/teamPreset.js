@@ -29,7 +29,7 @@ export default [
           field: 'chars',
           label: '角色',
           helpMessage: '按出场顺序填写 1~4 个角色',
-          bottomHelpMessage: '用逗号或空格分隔，支持别名',
+          bottomHelpMessage: '用逗号或空格分隔，支持别名和换装（如 香菱换六命换精5）',
           component: 'Input',
           required: true,
           componentProps: { placeholder: '例如：雷电将军，九条裟罗，枫原万叶，班尼特' }
@@ -72,11 +72,12 @@ export function getData () {
   }
 }
 
-/** 角色名/别名 → 标准名的函数；miao-plugin 不可用时返回 null，跳过角色和手法校验 */
+/** 角色名解析和换装解析；miao-plugin 不可用时返回 null，跳过角色、换装和手法校验 */
 async function getResolver () {
   try {
     const { Character } = await import('../../../miao-plugin/models/index.js')
-    return (name) => Character.get(name)?.name || null
+    const { parseMember } = await import('../../model/loadout.js')
+    return { resolve: (name) => Character.get(name)?.name || null, parseMember }
   } catch {
     return null
   }
@@ -84,7 +85,7 @@ async function getResolver () {
 
 /** 写入：校验后保存，出错时抛出带提示的异常 */
 export async function setData (data) {
-  const resolve = await getResolver()
+  const resolver = await getResolver()
   const presets = []
   const names = new Set()
   for (const [i, item] of (Array.isArray(data?.teams) ? data.teams : []).entries()) {
@@ -96,11 +97,15 @@ export async function setData (data) {
     if (!name) throw new Error(`${row}缺少简写`)
     if (names.has(name)) throw new Error(`简写「${name}」重复了`)
     if (!chars.length || chars.length > 4) throw new Error(`${row}需要填写 1~4 个角色`)
-    if (resolve) {
-      const unknown = chars.filter(c => !resolve(c))
+    if (resolver) {
+      const { resolve, parseMember } = resolver
+      const members = chars.map(c => parseMember(c))
+      const unknown = members.filter(m => !resolve(m.name)).map(m => m.name)
       if (unknown.length) throw new Error(`${row}中无法识别的角色：${unknown.join('、')}`)
+      const badMod = members.find(m => m.unknown.length)
+      if (badMod) throw new Error(`${row}中${badMod.name}的「换${badMod.unknown.join('换')}」看不懂`)
       if (combo) {
-        const res = parseCombo(splitTokens(combo), chars.map(resolve), resolve)
+        const res = parseCombo(splitTokens(combo), members.map(m => resolve(m.name)), resolve)
         if (res.error) throw new Error(`${row}的手法有误：${res.error}`)
       }
     }

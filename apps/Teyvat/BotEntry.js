@@ -1,8 +1,20 @@
 /* eslint-disable camelcase */
+import fs from 'node:fs'
 import plugin from '../../../../lib/plugins/plugin.js'
 import { team } from './getTeam.js'
 import { splitTokens } from './combo.js'
 import MysApi from './GetATUID.js'
+import helpData from './helpData.js'
+import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
+import { pluginName, pluginRoot } from '../../model/path.js'
+
+function getVersion () {
+  try {
+    return JSON.parse(fs.readFileSync(`${pluginRoot}/package.json`, 'utf8')).version
+  } catch {
+    return ''
+  }
+}
 
 export class BotEntry extends plugin {
   constructor () {
@@ -13,11 +25,30 @@ export class BotEntry extends plugin {
       priority: 3141,
       rule: [
         {
+          // 放在计算指令前面，否则「帮助」会被当成队伍名
+          reg: /^#队伍伤害(帮助|说明|教程|用法)$/,
+          fnc: 'help'
+        },
+        {
           reg: /^#队伍伤害(?:详情|过程|全图)?(\d+)?(.*)$/,
           fnc: 'TeyvatEnTry'
         }
       ]
     })
+  }
+
+  async help (e) {
+    const img = await puppeteer.screenshot('TeamDamageHelp', {
+      ...helpData,
+      tplFile: `${pluginRoot}/resources/Teyvat/help.html`,
+      pluResPath: `${pluginRoot}/resources/Teyvat/`,
+      miaoRes: `${process.cwd().replace(/\\/g, '/')}/plugins/miao-plugin/resources/`,
+      pluginName,
+      version: getVersion(),
+      saveId: 'help'
+    })
+    await e.reply(img)
+    return true
   }
 
   async GetNowUid (e) {

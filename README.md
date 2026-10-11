@@ -24,6 +24,8 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 | `#队伍伤害@张三 钟离，阿贝多` | 计算被艾特用户的队伍 |
 | `#队伍伤害雷九` | 使用队伍简写 |
 | `#队伍伤害钟离，班尼特，香菱，行秋 钟离长e，班尼特eq，香菱q，e` | 自定义手法 |
+| `#队伍伤害香菱换六命换精5，行秋，班尼特` | 换装模拟（见下文） |
+| `#队伍伤害帮助` | 以图片形式查看全部写法 |
 | `#更新队伍伤害` / `#强制更新队伍伤害` | 更新插件并自动重启（主人）；强制更新会丢弃本地改动 |
 
 计算前需先通过 `#更新面板` 获取对应角色的面板数据。
@@ -62,6 +64,28 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 
 如果某个动作该角色无法使用（例如普攻段数超出），小助手会拒绝计算，去掉该动作即可。
 
+### 换装模拟
+
+在角色名后面接「换xx」，可以叠加，用当前面板估算换装后的伤害：
+
+| 写法 | 含义 |
+|---|---|
+| `换六命` / `换6命` / `换命座6` | 命座 0~6；跨过 3/5 命时对应天赋自动 +3（小助手不会自己加） |
+| `换精5` / `换精炼5` / `换r5` | 武器精炼 |
+| `换天赋101313` / `换天赋10-13-13` / `换天赋999` | 天赋最终等级（普攻 / E / Q），优先于换命座带来的天赋变化 |
+| `换90级` | 角色等级 |
+| `换护摩之杖` / `换护摩` / `换专武` | 换武器，支持 miao 的武器别名 |
+| `换4千岩` / `换绝缘` / `换2追忆2如雷` | 换圣遗物套装，不写件数按 4 件 |
+
+```
+#队伍伤害雷神换专武换六命，九条裟罗，万叶，班尼特换精5
+```
+
+- 小助手不计算武器白值和副词条，换武器时插件按 miao 的武器数据在本地换算（攻击% 类按近似折算）
+- 换套装只换套装效果，圣遗物词条沿用当前面板；原套装两件套的属性加成已算进面板，所以主要体现的是四件套效果
+- 武器类型不对时会提示并跳过，其余换装照常生效
+- 队伍预设的角色里也可以写换装
+
 ### 队伍简写
 
 默认简写见 `config/default_SimpleTeamArr.yaml`。自定义方式任选其一，修改即时生效：
@@ -83,6 +107,7 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 - [@AFanSKyQs](https://github.com/AFanSKyQs)（[FanSky_Qs](https://github.com/AFanSKyQs/FanSky_Qs) 原作者）
 - [@yoimiya-kokomi](https://github.com/yoimiya-kokomi)（Miao-Yunzai、miao-plugin 资源与数据）
 - [@monsterxcn](https://github.com/monsterxcn)（[nonebot-plugin-gspanel](https://github.com/monsterxcn/nonebot-plugin-gspanel)）
+- [@cchanlan](https://github.com/cchanlan)（[xhh-TL](https://github.com/cchanlan/xhh-TL)，换装模拟与帮助图的思路参考）
 
 ## 其他
 

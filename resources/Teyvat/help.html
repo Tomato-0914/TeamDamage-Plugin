@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <style>
+        @font-face {
+            font-family: "PanelFont";
+            src: url({{pluResPath}}../fonts/HYWH-65W.ttf);
+        }
+
+        @font-face {
+            font-family: "PanelNumFont";
+            src: url({{pluResPath}}../fonts/tttgbnumber.ttf);
+        }
+
+        body {
+            margin: 0;
+        }
+
+        #container {
+            width: 900px;
+            padding: 30px 0 20px;
+            font-family: "PanelFont", sans-serif;
+            color: #fff;
+            background-color: #2b2224;
+            background-image: linear-gradient(rgba(30, 22, 26, 0.55), rgba(30, 22, 26, 0.75)), url({{miaoRes}}common/bg/bg-pyro.webp);
+            background-size: 100% auto;
+            background-repeat: repeat-y;
+        }
+
+        .head {
+            margin: 0 30px 20px;
+        }
+
+        .head .title {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .head .sub {
+            margin-top: 6px;
+            font-size: 18px;
+            opacity: 0.7;
+        }
+
+        .card {
+            margin: 0 20px 18px;
+            padding: 6px 20px 16px;
+            border-radius: 15px;
+            background-color: #332e3ed6;
+            box-shadow: 0 15px 15px rgb(0 0 0 / 40%);
+        }
+
+        .card > .name {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            font-size: 25px;
+            font-weight: 700;
+        }
+
+        .card > .name > span {
+            padding-left: 16px;
+            font-size: 17px;
+            font-weight: 400;
+            opacity: 0.68;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 18px;
+        }
+
+        .name + .row {
+            border-top: none;
+        }
+
+        .code {
+            flex: 0 0 340px;
+            margin-right: 16px;
+        }
+
+        .code > i {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 5px;
+            font-style: normal;
+            color: #2b2224;
+            background-color: rgb(164 241 137);
+        }
+
+        .mods .code > i {
+            background-color: #ffd98a;
+        }
+
+        .basics .code > i {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .mean {
+            flex: 1;
+            opacity: 0.9;
+        }
+
+        ul.rules {
+            margin: 10px 0 0;
+            padding-left: 22px;
+            font-size: 17px;
+            line-height: 1.75;
+            opacity: 0.92;
+        }
+
+        ul.rules b {
+            color: #a4f189;
+            font-weight: 400;
+        }
+
+        .mods ul.rules b {
+            color: #ffd98a;
+        }
+
+        .foot {
+            margin: 4px 30px 0;
+            font-size: 14px;
+            text-align: right;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+<div id="container">
+    <div class="head">
+        <div class="title">队伍伤害 · 帮助</div>
+        <div class="sub">伤害由提瓦特小助手计算 · 支持自定义手法与换装模拟</div>
+    </div>
+
+    <div class="card basics">
+        <div class="name">基础用法</div>
+        {{each basics item}}
+        <div class="row">
+            <div class="code"><i>{{item.cmd}}</i></div>
+            <div class="mean">{{item.desc}}</div>
+        </div>
+        {{/each}}
+    </div>
+
+    <div class="card">
+        <div class="name">自定义手法<span>写在队伍后面，不写则用小助手的默认手法</span></div>
+        {{each actions item}}
+        <div class="row">
+            <div class="code"><i>{{item.code}}</i></div>
+            <div class="mean">{{item.mean}}</div>
+        </div>
+        {{/each}}
+        <ul class="rules">
+            {{each actionRules rule}}
+            <li>{{@ rule}}</li>
+            {{/each}}
+        </ul>
+    </div>
+
+    <div class="card mods">
+        <div class="name">换装模拟<span>接在角色名后面，用当前面板估算换装后的伤害</span></div>
+        {{each mods item}}
+        <div class="row">
+            <div class="code"><i>{{item.code}}</i></div>
+            <div class="mean">{{item.mean}}</div>
+        </div>
+        {{/each}}
+        <ul class="rules">
+            {{each modRules rule}}
+            <li>{{@ rule}}</li>
+            {{/each}}
+        </ul>
+    </div>
+
+    <div class="card">
+        <div class="name">说明</div>
+        <ul class="rules">
+            {{each notes rule}}
+            <li>{{@ rule}}</li>
+            {{/each}}
+        </ul>
+    </div>
+
+    <div class="foot">{{pluginName}} v{{version}}</div>
+</div>
+</body>
+</html>
