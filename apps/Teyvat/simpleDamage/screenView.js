@@ -84,7 +84,7 @@ export default function buildScreenView (data, resolveName, miaoRes, exists) {
 
   // 主 C：输出占比最高的队员，用它的立绘做背景
   const mainChar = share.find(s => teamNames.includes(s.char))?.char || teamNames[0] || ''
-  const imgs = `${miaoRes}meta-gs/character/${mainChar}/imgs/`
+  const imgs = `${miaoRes}meta-gs/character/${data.avatars[mainChar]?.imgName || mainChar}/imgs/`
   const splash = ['splash.webp', 'gacha.webp', 'face.webp'].map(f => imgs + f).find(exists) || ''
 
   return {

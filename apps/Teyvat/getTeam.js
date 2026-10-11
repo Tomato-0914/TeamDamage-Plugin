@@ -53,9 +53,22 @@ let dmgKeys =
         "grass_dmg": "dendro",
     }
 
+/** 旅行者在 miao 里有「旅行者 / 空 / 荧」等多种写法，队伍和手法里统一记为「旅行者」 */
+const TRAVELER = '旅行者'
+const TRAVELER_WORDS = /旅行者|主角?|空|荧|爷/g
+
+/** 角色 → 队伍里使用的标准名 */
+const stdName = (char) => (char.isTraveler ? TRAVELER : char.name)
+
 /** 角色名/别名 → 标准名，无法识别返回 null */
 function resolveName(name) {
-  return Character.get(name)?.name || null
+  const char = Character.get(name)
+  return char ? stdName(char) : null
+}
+
+/** 旅行者写法里明确带了元素（草主、旅行者雷），返回 miao 元素 key */
+function travelerElem(name, char) {
+  return /[风岩雷草水火冰]/.test(name.replace(TRAVELER_WORDS, '')) ? char.elem : ''
 }
 
 /**
@@ -114,6 +127,7 @@ export async function team(e, tokens, uid) {
   // 队员可带换装：香菱换六命换精5
   let teamarId = []
   let loadouts = {}
+  let wantTravelerElem = ''
   for (const v of teamlist) {
     const {name, mods, unknown} = parseMember(v.split('(')[0].trim())
     const char = Character.get(name)
@@ -121,27 +135,24 @@ export async function team(e, tokens, uid) {
       await e.reply(`队伍中存在未能识别的角色：${name}`)
       return true
     }
+    const std = stdName(char)
     if (unknown.length) {
-      await e.reply(`${char.name}的「换${unknown.join('换')}」看不懂\n${LOADOUT_USAGE}\n完整写法见 #队伍伤害帮助`, true)
+      await e.reply(`${std}的「换${unknown.join('换')}」看不懂\n${LOADOUT_USAGE}\n完整写法见 #队伍伤害帮助`, true)
       return true
     }
-    if (teamarId.some(c => c.id === char.id)) {
-      await e.reply(`队伍里重复出现了「${char.name}」`, true)
+    if (teamarId.some(c => stdName(c) === std)) {
+      await e.reply(`队伍里重复出现了「${std}」`, true)
       return true
     }
+    if (char.isTraveler) wantTravelerElem = travelerElem(name, char)
     teamarId.push(char)
-    if (!_.isEmpty(mods)) loadouts[char.name] = mods
-  }
-
-  if (teamarId.some(v => ['旅行者', '空', '荧', '萤'].includes(v.name))) {
-    await e.reply('[旅行者]暂不支持计算伤害喵！~')
-    return true
+    if (!_.isEmpty(mods)) loadouts[std] = mods
   }
 
   // 手法在请求前解析，写错了不必等面板和接口
   let custom = null
   if (comboTokens.length) {
-    custom = parseCombo(comboTokens, teamarId.map(v => v.name), resolveName)
+    custom = parseCombo(comboTokens, teamarId.map(stdName), resolveName)
     if (custom.error) {
       const where = presetCombo ? `队伍预设「${presetCombo}」的手法有误：` : ''
       await e.reply(`${where}${custom.error}\n\n${COMBO_USAGE}`, true)
@@ -157,20 +168,35 @@ export async function team(e, tokens, uid) {
   let player = Player.create(uid)
   // role_data 的顺序即手法里的角色序号，必须按队伍顺序依次处理
   for (const v of teamarId) {
-    let char = v.name
+    let char = stdName(v)
     let profile = player.getProfile(v.id)
     if (!profile || !profile.hasData) {
       NoDataName.push(char)
       continue
     }
+    // 小助手的旅行者写作「旅行者 + 元素」，元素取面板里当前的元素（面板只存最后一次更新时的元素）
+    let teyvatName = char
+    if (v.isTraveler) {
+      const elemCn = attrsKeys[profile.elem]
+      if (wantTravelerElem && wantTravelerElem !== profile.elem) {
+        await e.reply(`面板里的旅行者是${elemCn}元素，想算${attrsKeys[wantTravelerElem]}主的话，请在游戏里切换到${attrsKeys[wantTravelerElem]}元素后 #更新面板`, true)
+        return true
+      }
+      if (profile.elem === 'cryo') {
+        await e.reply('提瓦特小助手暂不支持冰主的伤害计算', true)
+        return true
+      }
+      teyvatName = TRAVELER + elemCn
+    }
     const panel = await covProfileroleData(profile)
     const teyvatData = await covProfileTeyvatData(profile, uid)
+    teyvatData.role = teyvatName
     if (loadouts[char]) {
       const {labels, warns} = applyLoadout(teyvatData, panel, loadouts[char], profile)
       if (labels.length) loadoutTips.push(`${char}：${labels.join(' / ')}`)
       loadoutWarns.push(...warns)
     }
-    rolesData[char] = panel
+    rolesData[teyvatName] = panel
     role_data.push(teyvatData)
   }
 
@@ -178,7 +204,7 @@ export async function team(e, tokens, uid) {
     await e.reply(`UID${uid}：缺少${NoDataName.join('|')}\n请先通过【#更新面板】拿到对应角色数据。`, true)
     return true
   }
-  let isData = teamarId.map(v => v.name).join('|')
+  let isData = role_data.map(v => v.role).join('|')
   // 具体手法会画在结果图里，这里只标注用的是自定义还是默认手法
   const tips = [`UID${uid}：${isData}`, `手法：[${custom ? '自定义' : '默认'}]`]
   if (loadoutTips.length) tips.push(`换装：${loadoutTips.join('；')}`)
@@ -208,8 +234,14 @@ export async function team(e, tokens, uid) {
 
 function screenData(e, data) {
     const miaoRes = `${cwd}/plugins/miao-plugin/resources/`
+    // 伤害记录里旅行者写作「草主」等，要对应到结果里的「旅行者草」
+    const traveler = Object.keys(data.avatars).find(n => n.startsWith(TRAVELER))
+    const viewName = (name) => {
+        const std = resolveName(name)
+        return std === TRAVELER ? traveler || null : std
+    }
     return {
-        ...buildScreenView(data, resolveName, miaoRes, fs.existsSync),
+        ...buildScreenView(data, viewName, miaoRes, fs.existsSync),
         data,
         quality: 100,
         saveId: e.user_id,
@@ -329,6 +361,8 @@ async function covProfileroleData(profile) {
     //let char_p_l = Character.get(profile.char.name)
     //roleData['rarity'] = profile.char.id
     roleData['name'] = profile.char.name
+    // 头像、立绘所在目录名，旅行者为「空 / 荧」
+    roleData['imgName'] = profile.char.name
     roleData['element'] = attrsKeys[profile.elem]
     roleData['fetter'] = profile.char.fetter
     roleData['cons'] = profile.cons

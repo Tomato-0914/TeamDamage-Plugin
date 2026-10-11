@@ -3,7 +3,6 @@ import _ from 'lodash'
 import fs from 'node:fs'
 
 const cwd = process.cwd().replace(/\\/g, '/')
-let roleData = {}
 const miaoRes = `${cwd}/plugins/miao-plugin/resources/meta-gs`
 /**
  * 转换队伍伤害计算请求数据为精简格式
@@ -36,19 +35,16 @@ async function simpleTeamDamageRes (raw, rolesData) {
 
     let relicSet = _.pickBy(panelData.relicSet, i => i >= 2)
 
-    let skills = []
-    _.each(panelData.skills, skill => {
-      skills.push({
-        icon: getTalentPath(role.role, skill.icon),
-        style: skill.style,
-        level: skill.level
-      })
-    })
+    // 结果图只显示天赋等级
+    let skills = _.map(panelData.skills, skill => ({ style: skill.style, level: skill.level }))
+    // 图片目录名：旅行者在结果里叫「旅行者草」，图片在「空 / 荧」目录下
+    const imgName = panelData.imgName || role.role
 
     avatars[role.role] = {
       rarity: role.role_star,
       name: role.role,
-      face: getFace(role.role),
+      imgName,
+      face: getFace(imgName),
       elem: panelData.element,
       cons: role.role_class,
       level: role.role_level.replace('Lv', ''),
@@ -134,39 +130,6 @@ async function simpleTeamDamageRes (raw, rolesData) {
     damages,
     buffs
   }
-}
-
-function getTalentPath (role, icon) {
-  // 每个角色只读一遍
-  if (_.isEmpty(roleData) || roleData.name != role) roleData = readJson(role)
-
-  let weapon = roleData.weapon
-  let talentCons = roleData.talentCons
-
-  let type = icon.split('_')[1]
-  let talentpath = `meta-gs/character/${role}/icons`
-
-  switch (type) {
-    case 'A':
-      return `common/item/atk-${weapon}.webp`
-    case 'S':
-      if (!talentCons.e) return `${talentpath}/talent-e.webp`
-      return `${talentpath}/${talentCons.e === 3 ? 'cons-3' : 'cons-5'}.webp`
-    case 'E':
-      if (!talentCons.q) return `${talentpath}/talent-q.webp`
-      return `${talentpath}/${talentCons.q === 5 ? 'cons-5' : 'cons-3'}.webp`
-  }
-  return '未知'
-}
-
-function readJson (name) {
-  let data = {}
-  let file = `${miaoRes}/character/${name}/data.json`
-  if (fs.existsSync(file)) {
-    // 获取本地数据 进行数据合并
-    data = JSON.parse(fs.readFileSync(file, 'utf8'))
-  }
-  return data
 }
 
 function getFace (role) {
