@@ -11,6 +11,14 @@ const OTHER_COLOR = '#9aa3b2'
 
 const toNum = (v) => Number(String(v ?? '').replace(/,/g, '')) || 0
 
+/** 色块上的文字颜色：小助手的角色色有亮黄、亮绿这类浅色，白字会看不清 */
+function textOn (color) {
+  const m = String(color).match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i)
+  if (!m) return '#ffffff'
+  const [r, g, b] = m.slice(1).map(h => parseInt(h, 16))
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? '#2b2a33' : '#ffffff'
+}
+
 /**
  * @param {Object} data simpleTeamDamageRes 的返回值
  * @param {(name: string) => string|null} resolveName 角色名/别名 → 标准名
@@ -25,7 +33,7 @@ export default function buildScreenView (data, resolveName, miaoRes, exists) {
   const pieTotal = pie.reduce((p, c) => p + c.damage, 0) || 1
   const colors = {}
   pie.forEach((d, i) => { colors[d.char] = data.pie_color2[i] })
-  const share = pie.map((d, i) => ({ ...d, pct: Math.round(d.damage / pieTotal * 1000) / 10, color: data.pie_color2[i] }))
+  const share = pie.map((d, i) => ({ ...d, pct: Math.round(d.damage / pieTotal * 1000) / 10, color: data.pie_color2[i], text: textOn(data.pie_color2[i]) }))
 
   // 伤害记录里的动作名带角色简称（雷神E协同、万叶Q后续），取能识别为队员的最长前缀
   const ownerCache = {}

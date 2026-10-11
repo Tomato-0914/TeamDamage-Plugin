@@ -108,7 +108,7 @@
 
   <div class="sec card">
     <h3>队伍与输出占比</h3>
-    <div class="stack">{{each share s}}<div style="width:{{s.pct}}%;background:{{s.color}}">{{if s.pct > 8}}{{s.char}} {{s.pct}}%{{/if}}</div>{{/each}}</div>
+    <div class="stack">{{each share s}}<div style="width:{{s.pct}}%;background:{{s.color}};color:{{s.text}}">{{if s.pct > 8}}{{s.char}} {{s.pct}}%{{/if}}</div>{{/each}}</div>
     <div class="avs">
       {{each avatarList a}}
       <div class="av" style="--c: {{a.color}}">
