@@ -90,9 +90,10 @@ function parseLoadoutMods (list, charNames) {
       else unknown.push(`${item}（天赋请写 3 位如 999、6 位如 101313，或 10-13-13）`)
       continue
     }
-    m = item.match(/^(?:等级)?(\d{1,2})级$/)
+    // 等级：小助手接受到 100 级（实测更高也收但不校验），本地限制在 1~100
+    m = item.match(/^(?:等级)?(\d{1,3})级$/)
     if (m) {
-      mods.level = Math.min(90, Math.max(1, Number(m[1])))
+      mods.level = Math.min(100, Math.max(1, Number(m[1])))
       continue
     }
     if (/^(?:专武|专属武器|专属)$/.test(item)) {
