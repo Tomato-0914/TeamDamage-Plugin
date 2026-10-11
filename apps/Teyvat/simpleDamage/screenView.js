@@ -95,7 +95,17 @@ export default function buildScreenView (data, resolveName, miaoRes, exists) {
   const imgs = `${miaoRes}meta-gs/character/${data.avatars[mainChar]?.imgName || mainChar}/imgs/`
   const splash = ['splash.webp', 'gacha.webp', 'face.webp'].map(f => imgs + f).find(exists) || ''
 
+  // 评级档位，决定徽章配色
+  const rank = String(data.rank || '')
+  const rankTier = rank.includes('ACE') ? 'ace' : rank.startsWith('S') ? 's' : rank.startsWith('A') ? 'a' : rank.startsWith('B') ? 'b' : 'c'
+
+  // 标题下的队员名，名字长时缩小字号，避免压到评级徽章
+  const teamLine = Object.keys(data.avatars).join(' / ')
+
   return {
+    rankTier,
+    teamLine,
+    teamLineSize: teamLine.length > 24 ? 16 : teamLine.length > 19 ? 18 : 21,
     elemKey: ELEM_KEY[data.elem] || ELEM_KEY[data.avatars[mainChar]?.elem] || 'pyro',
     splash,
     share,

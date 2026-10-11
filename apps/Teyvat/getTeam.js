@@ -229,6 +229,8 @@ export async function team(e, tokens, uid) {
   }
   let data = await simpleTeamDamageRes(res.result, rolesData)
   data.custom = !!custom
+  // 用队伍简写计算时，标题显示简写名
+  data.presetName = preset?.name || ''
   let ScreenData = screenData(e, data)
   let img = await puppeteer.screenshot('TeamDamage', ScreenData)
   await e.reply(img)

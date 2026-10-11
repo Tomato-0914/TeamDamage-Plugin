@@ -120,6 +120,8 @@ async function simpleTeamDamageRes (raw, rolesData) {
     uid: raw.uid,
     elem,
     rank: raw.zdl_tips2,
+    // 「级别，超过了全服91.1%的玩家」→「超过全服 91.1% 的玩家」
+    rankTip: String(raw.zdl_tips3 || '').replace(/^级别，?/, '').replace(/超过了全服\s*([\d.]+%)\s*的?/, '超过全服 $1 的'),
     dps: raw.zdl_result,
     tm,
     total,

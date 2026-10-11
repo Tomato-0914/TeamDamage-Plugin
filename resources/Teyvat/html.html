@@ -26,14 +26,28 @@
   .head .splash { position: absolute; right: -40px; top: -40px; height: 360px; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 40%); }
   .head .l { position: absolute; left: 32px; top: 26px; }
   .head .uid { font-size: 18px; color: var(--sub); }
-  .head .title { font-size: 34px; font-weight: 700; margin-top: 4px; }
+  .head .title { font-size: 34px; font-weight: 700; margin-top: 4px; white-space: nowrap; }
+  .head .title .pn { color: var(--accent); }
   .head .team { font-size: 21px; color: #5d5866; margin-top: 4px; }
   .head .big { display: flex; align-items: baseline; gap: 14px; margin-top: 18px; }
   .head .big .dps { font-family: "NumFont"; font-size: 64px; color: var(--accent); line-height: 1; }
   .head .big .u { font-size: 21px; color: var(--sub); }
-  .head .rank { position: absolute; left: 520px; top: 34px; width: 92px; height: 92px; border-radius: 50%; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 16px rgba(var(--accent-rgb),0.25); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .head .rank .r { font-family: "NumFont"; font-size: 36px; color: var(--accent); line-height: 1; }
-  .head .rank .k { font-size: 14px; color: var(--sub); margin-top: 4px; }
+  /* 伤害评级徽章：按档位配色 ACE 红金 / S 金 / A 紫 / B 蓝 / 其他灰 */
+  .head .rank { position: absolute; left: 430px; top: 16px; width: 220px; display: flex; flex-direction: column; align-items: center; z-index: 1; }
+  .rank.t-ace { --r1: #ff3d6e; --r2: #ffb13b; --rg: 255,77,90;  --rt: #d92f4b; }
+  .rank.t-s   { --r1: #ffd54a; --r2: #ff8a2a; --rg: 255,150,40; --rt: #c96a08; }
+  .rank.t-a   { --r1: #b08cff; --r2: #6a5cff; --rg: 125,100,255; --rt: #5f45d8; }
+  .rank.t-b   { --r1: #5cc8ff; --r2: #2f7dff; --rg: 60,140,255; --rt: #2a68c8; }
+  .rank.t-c   { --r1: #c3cad4; --r2: #8a94a3; --rg: 120,130,145; --rt: #646c78; }
+  .rank .disc { width: 136px; height: 136px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(145deg, var(--r1), var(--r2)); border: 5px solid rgba(255,255,255,0.92);
+    box-shadow: 0 0 0 8px rgba(var(--rg),0.16), 0 12px 32px rgba(var(--rg),0.5); }
+  .rank .disc::before { content: ""; position: absolute; inset: 8px 22px 54% 22px; border-radius: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0)); }
+  .rank .disc span { position: relative; font-family: "NumFont"; color: #fff; line-height: 1; text-shadow: 0 3px 10px rgba(0,0,0,0.28); }
+  .rank .disc span.l1 { font-size: 80px; }
+  .rank .disc span.l2 { font-size: 66px; }
+  .rank .disc span.l3 { font-size: 50px; }
+  .rank .cap { margin-top: 12px; padding: 4px 14px; border-radius: 16px; font-size: 16px; white-space: nowrap; color: var(--rt); background: rgba(255,255,255,0.8); box-shadow: 0 2px 8px rgba(var(--rg),0.2); }
 
   .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: -26px 20px 14px; position: relative; }
   .kpi { padding: 12px 16px; }
@@ -92,11 +106,18 @@
     <img class="splash" src="{{splash}}">
     <div class="l">
       <div class="uid">UID {{data.uid}}</div>
+      {{if data.presetName}}
+      <div class="title">队伍伤害<span class="pn">·{{data.presetName}}</span></div>
+      {{else}}
       <div class="title">队伍伤害</div>
-      <div class="team">{{each avatarList a i}}{{if i}} / {{/if}}{{a.name}}{{/each}}</div>
+      <div class="team" style="font-size: {{teamLineSize}}px">{{teamLine}}</div>
+      {{/if}}
       <div class="big"><span class="dps">{{data.dps}}</span><span class="u">DPS · 手法{{data.custom ? '自定义' : '默认'}}</span></div>
     </div>
-    <div class="rank"><div class="r">{{data.rank}}</div><div class="k">伤害评级</div></div>
+    <div class="rank t-{{rankTier}}">
+      <div class="disc"><span class="l{{data.rank.length > 3 ? 3 : data.rank.length}}">{{data.rank}}</span></div>
+      <div class="cap">{{data.rankTip || '伤害评级'}}</div>
+    </div>
   </div>
 
   <div class="kpis">
