@@ -30,7 +30,7 @@ export class BotEntry extends plugin {
           fnc: 'help'
         },
         {
-          reg: /^#队伍伤害(?:详情|过程|全图)?(\d+)?(.*)$/,
+          reg: /^#队伍伤害(?:详情|过程|全图)?(\d{9,10})?(.*)$/,
           fnc: 'TeyvatEnTry'
         }
       ]
@@ -61,7 +61,7 @@ export class BotEntry extends plugin {
   async TeyvatEnTry (e) {
     let at = e.at
     // 结果图固定展示伤害过程，旧的 详情/过程/全图 前缀仍兼容但不再区分
-    const regexTeam = /^#队伍伤害(?:详情|过程|全图)?(\d+)?(.*)$/
+    const regexTeam = /^#队伍伤害(?:详情|过程|全图)?(\d{9,10})?(.*)$/
     const matchTeam = e.msg.match(regexTeam)
     let uid = matchTeam[1] ? matchTeam[1] : await this.GetNowUid(e)
     if (at) {
