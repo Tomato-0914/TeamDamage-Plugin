@@ -6,6 +6,8 @@ package-lock.json
 
 # 用户自定义的队伍简写（从 default_SimpleTeamArr.yaml 复制而来）
 config/SimpleTeamArr.yaml
+# 用户设置（从锅巴保存或手动新建）
+config/config.yaml
 
 # 日志
 *.log

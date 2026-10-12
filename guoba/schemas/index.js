@@ -1,15 +1,18 @@
 // ==========================
 //  锅巴配置中心
 // ==========================
+import settings, * as settingsData from './settings.js'
 import teamPreset, * as teamPresetData from './teamPreset.js'
 
 /** 各配置模块：表单字段写成「模块名.字段名」，读写时按模块名分发 */
 const modules = {
+  settings: settingsData,
   teamPreset: teamPresetData
 }
 
 /* -------------- 动态表单模式 -------------- */
 export const schemas = [
+  ...settings,
   ...teamPreset
 ]
 

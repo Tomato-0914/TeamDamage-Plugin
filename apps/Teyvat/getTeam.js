@@ -8,6 +8,7 @@ import simpleTeamDamageRes from './simpleDamage/simpleTeamDamageRes.js'
 import buildScreenView from './simpleDamage/screenView.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import {findPreset} from "../../model/teamPreset.js"
+import {getConfig} from "../../model/config.js"
 import {pluginRoot, pluginName} from "../../model/path.js"
 import {COMBO_USAGE, inferTeam, parseCombo, splitTeamAndCombo, splitTokens} from "./combo.js"
 import {LOADOUT_USAGE, applyLoadout, parseMember} from "../../model/loadout.js"
@@ -212,8 +213,11 @@ export async function team(e, tokens, uid) {
   const tips = [`UID${uid}：${isData}`, `手法：[${custom ? '自定义' : '默认'}]`]
   if (loadoutTips.length) tips.push(`换装：${loadoutTips.join('；')}`)
   if (loadoutWarns.length) tips.push(`注意：${loadoutWarns.join('；')}`)
-  // 提示信息 5 秒后自动撤回，避免刷屏
-  await e.reply(tips.join('\n'), false, { recallMsg: 5 })
+  // 提示信息按设置自动撤回，避免刷屏；关闭提示时仍发送换装警告
+  const cfg = getConfig()
+  if (cfg.sendTips !== false || loadoutWarns.length) {
+    await e.reply(tips.join('\n'), false, { recallMsg: Math.min(120, Math.max(0, Number(cfg.tipsRecall) || 0)) })
+  }
   logger.info(logger.cyan(`[${pluginName}]队伍伤害[请求UID:${uid}]>>>${isData}${custom ? ` 手法:${JSON.stringify(custom.combo)}` : ''}${loadoutTips.length ? ` 换装:${loadoutTips.join('；')}` : ''}`))
 
   let TiwateBody = {uid, role_data, server: getServer(uid, true)}
