@@ -32,7 +32,7 @@ export class BotEntry extends plugin {
         },
         {
           // 同样要放在计算指令前面，否则「预设」会被当成队伍名
-          reg: /^#队伍(?:伤害)?预设(?:列表)?\s*(默认|自定义)?$/,
+          reg: /^#队伍伤害预设列表$/,
           fnc: 'presetList'
         },
         {
@@ -58,8 +58,7 @@ export class BotEntry extends plugin {
   }
 
   async presetList (e) {
-    const only = e.msg.match(/(默认|自定义)$/)?.[1] || ''
-    return presetList(e, only)
+    return presetList(e)
   }
 
   async GetNowUid (e) {

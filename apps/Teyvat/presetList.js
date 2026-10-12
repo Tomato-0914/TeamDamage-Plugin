@@ -59,30 +59,52 @@ async function renderGroups (presets, source, overriddenNames) {
   return imgs
 }
 
+/** 转成 OneBot 协议的消息段：文字转 text，图片 Buffer 转 base64 */
+function toOneBotSeg (m) {
+  if (typeof m === 'string') return { type: 'text', data: { text: m } }
+  if (m?.type === 'image') {
+    let file = m.data?.file ?? m.file
+    // 本地路径协议端不一定读得到，统一转成 base64
+    if (typeof file === 'string' && !/^\w+:\/\//.test(file) && fs.existsSync(file)) file = fs.readFileSync(file)
+    return { type: 'image', data: { file: Buffer.isBuffer(file) ? `base64://${file.toString('base64')}` : file } }
+  }
+  return m
+}
+
 /**
- * #队伍预设：合并转发全部队伍预设，默认预设和自定义预设分开展示
- * @param {'默认'|'自定义'|''} only 只看其中一种
+ * 发送一个合并转发，里面每一节是一个子合并转发
+ * TRSS 的 OneBotv11 适配器会把节点里的合并转发展开到同一层，嵌套不起来。
+ * 所以 OneBot 下直接拼好协议格式的嵌套节点（节点 content 里放节点，NapCat / LLOneBot 均支持），
+ * 用 raw 段原样交给协议端；其他适配器（如 ICQQ）按常规方式嵌套
+ * @param {{title: string, msgs: any[]}[]} sections
  */
-export async function presetList (e, only = '') {
+async function sendNestedForward (e, sections) {
+  if (e.bot?.adapter?.name === 'OneBotv11') {
+    const sender = { name: e.bot?.nickname || 'Bot', uin: String(e.self_id || e.bot?.uin || 80000000) }
+    const node = content => ({ type: 'node', data: { ...sender, content } })
+    const outer = sections.map(s => [s.title, ...s.msgs].map(m => ({ type: 'raw', data: node([toOneBotSeg(m)]) })))
+    return e.reply(await common.makeForwardMsg(e, outer))
+  }
+  const inner = []
+  for (const s of sections) inner.push(await common.makeForwardMsg(e, s.msgs, s.title))
+  return e.reply(await common.makeForwardMsg(e, inner))
+}
+
+/** #队伍伤害预设列表：一个合并转发里包含自定义预设、默认预设两个合并转发，自定义在前 */
+export async function presetList (e) {
   const defaults = loadDefaultPresets()
   const users = loadUserPresets()
   const userNames = new Set(users.map(p => p.name))
-  const msgs = []
+  const usage = '使用预设：#队伍伤害+预设名或别名，如 #队伍伤害雷九\n预设名后面还可以接手法，覆盖预设里的手法'
 
-  if (only !== '自定义') {
-    msgs.push(`【默认预设】共 ${defaults.length} 队，按队伍成型的大版本分类\n插件自带，随插件更新；与自定义预设同名时以自定义为准`)
-    msgs.push(...await renderGroups(defaults, { key: 'default', title: '默认预设' }, userNames))
-  }
-  if (only !== '默认') {
-    if (users.length) {
-      msgs.push(`【自定义预设】共 ${users.length} 队\n可在锅巴中编辑，或修改 config/SimpleTeamArr.yaml`)
-      msgs.push(...await renderGroups(users, { key: 'user', title: '自定义预设' }))
-    } else {
-      msgs.push('【自定义预设】暂无\n可在锅巴中添加，或新建 config/SimpleTeamArr.yaml')
-    }
-  }
-  msgs.push('使用预设：#队伍伤害+预设名或别名，如 #队伍伤害雷九\n预设名后面还可以接手法，覆盖预设里的手法')
+  const userMsgs = users.length
+    ? [...await renderGroups(users, { key: 'user', title: '自定义预设' }), usage]
+    : ['暂无自定义预设\n可在锅巴中添加，或新建 config/SimpleTeamArr.yaml']
+  const defaultMsgs = [...await renderGroups(defaults, { key: 'default', title: '默认预设' }, userNames), usage]
 
-  await e.reply(await common.makeForwardMsg(e, msgs.filter(Boolean), '队伍预设列表'))
+  await sendNestedForward(e, [
+    { title: `【自定义预设】共 ${users.length} 队\n可在锅巴中编辑，或修改 config/SimpleTeamArr.yaml；与默认预设同名时以自定义为准`, msgs: userMsgs.filter(Boolean) },
+    { title: `【默认预设】共 ${defaults.length} 队，按队伍成型的大版本分类\n插件自带，随插件更新`, msgs: defaultMsgs.filter(Boolean) }
+  ])
   return true
 }
