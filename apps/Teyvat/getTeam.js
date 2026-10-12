@@ -349,35 +349,23 @@ async function covProfileTeyvatData(profile, uid) {
     }
     TeyvatData["artifacts"] = str_artifacts;
     let artifacts_detail = []
-    let m_artis_i = 0
+    const artisTypes = ['生之花', '死之羽', '时之沙', '空之杯', '理之冠']
     for (const key in profile.artis.artis) {
+        const ar = profile.artis.artis[key]
+        // 未穿戴圣遗物的槽位没有主词条，跳过
+        if (!ar?.main) continue
         let m_artifacts_detail = {}
-        m_artifacts_detail["artifacts_name"] = profile.artis.artis[key].name
-        m_artifacts_detail["artifacts_type"] = ''
-        m_artis_i = m_artis_i + 1;
-        if (m_artis_i === 1) {
-            m_artifacts_detail["artifacts_type"] = '生之花'
-        }
-        if (m_artis_i === 2) {
-            m_artifacts_detail["artifacts_type"] = '死之羽'
-        }
-        if (m_artis_i === 3) {
-            m_artifacts_detail["artifacts_type"] = '时之沙'
-        }
-        if (m_artis_i === 4) {
-            m_artifacts_detail["artifacts_type"] = '空之杯'
-        }
-        if (m_artis_i === 5) {
-            m_artifacts_detail["artifacts_type"] = '理之冠'
-        }
-        m_artifacts_detail["level"] = profile.artis.artis[key].level
-        m_artifacts_detail["maintips"] = attrsKeys[profile.artis.artis[key].main.key]
+        m_artifacts_detail["artifacts_name"] = ar.name
+        // 按槽位号确定部位，避免空槽位导致后面的部位错位
+        m_artifacts_detail["artifacts_type"] = artisTypes[key - 1] || ''
+        m_artifacts_detail["level"] = ar.level
+        m_artifacts_detail["maintips"] = attrsKeys[ar.main.key]
         m_artifacts_detail["mainvalue"] = artisDetail.artis[key]?.main?.value?.replace(/,/g, "") ?? "";
         let m_t_i = 0
-        for (const key_att in profile.artis.artis[key].attrs) {
+        for (const key_att in ar.attrs) {
             m_t_i = m_t_i + 1
-            let a_n = profile.artis.artis[key].attrs[key_att].key
-            let a_v = artisDetail.artis[key].attrs[key_att]?.value?.replace(/,/g, "") ?? "";
+            let a_n = ar.attrs[key_att].key
+            let a_v = artisDetail.artis[key]?.attrs?.[key_att]?.value?.replace(/,/g, "") ?? "";
             m_artifacts_detail["tips" + m_t_i] = attrsKeys[a_n] + "+" + a_v
         }
         artifacts_detail.push(m_artifacts_detail);
