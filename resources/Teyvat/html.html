@@ -30,7 +30,10 @@
   .head .title .pn { color: var(--accent); }
   .head .team { font-size: 21px; color: #5d5866; margin-top: 4px; }
   .head .big { display: flex; align-items: baseline; gap: 14px; margin-top: 18px; }
-  .head .big .dps { font-family: "NumFont"; font-size: 64px; color: var(--accent); line-height: 1; }
+  .head .big .num { font-family: "NumFont"; font-size: 64px; color: var(--accent); line-height: 1; }
+  .head .big .num small { font-size: 40px; margin-left: 4px; }
+  .head .big.long .num { font-size: 54px; }
+  .head .big.long .num small { font-size: 34px; }
   .head .big .u { font-size: 21px; color: var(--sub); }
   /* 伤害评级徽章：按档位配色 ACE 红金 / S 金 / A 紫 / B 蓝 / 其他灰 */
   .head .rank { position: absolute; left: 430px; top: 16px; width: 220px; display: flex; flex-direction: column; align-items: center; z-index: 1; }
@@ -53,14 +56,13 @@
   .kpi { padding: 12px 16px; }
   .kpi .v { font-family: "NumFont"; font-size: 30px; }
   .kpi .k { font-size: 16px; color: var(--sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* 输出总伤：主数据，放大并用元素色渐变突出 */
+  /* DPS：次要主数据，用元素色渐变突出 */
   .kpis { align-items: stretch; }
   .kpi { display: flex; flex-direction: column; justify-content: flex-end; }
-  .kpi.total { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(var(--accent-rgb),0.26) 0, rgba(var(--accent-rgb),0.08) 55%, var(--card) 100%); border-color: rgba(var(--accent-rgb),0.45); box-shadow: 0 6px 24px rgba(var(--accent-rgb),0.22); }
-  .kpi.total::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 5px; border-radius: 0 4px 4px 0; background: var(--accent); }
-  .kpi.total .v { font-size: 48px; line-height: 1; letter-spacing: 1px; color: var(--accent); background: linear-gradient(180deg, rgba(var(--accent-rgb),0.7) 0, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 4px rgba(var(--accent-rgb),0.3)); }
-  .kpi.total .v small { font-size: 26px; margin-left: 3px; }
-  .kpi.total .k { color: var(--accent); font-weight: 700; }
+  .kpi.hero { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(var(--accent-rgb),0.26) 0, rgba(var(--accent-rgb),0.08) 55%, var(--card) 100%); border-color: rgba(var(--accent-rgb),0.45); box-shadow: 0 6px 24px rgba(var(--accent-rgb),0.22); }
+  .kpi.hero::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 5px; border-radius: 0 4px 4px 0; background: var(--accent); }
+  .kpi.hero .v { font-size: 40px; line-height: 1; letter-spacing: 1px; color: var(--accent); background: linear-gradient(180deg, rgba(var(--accent-rgb),0.7) 0, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 4px rgba(var(--accent-rgb),0.3)); }
+  .kpi.hero .k { color: var(--accent); font-weight: 700; }
 
   .sec { margin: 0 20px 14px; padding: 16px 18px; }
   .sec h3 { margin: 0 0 12px; font-size: 24px; display: flex; align-items: baseline; gap: 10px; }
@@ -120,7 +122,7 @@
       <div class="title">队伍伤害</div>
       <div class="team" style="font-size: {{teamLineSize}}px">{{teamLine}}</div>
       {{/if}}
-      <div class="big"><span class="dps">{{data.dps}}</span><span class="u">DPS · 手法{{data.custom ? '自定义' : '默认'}}</span></div>
+      <div class="big{{totalLong ? ' long' : ''}}"><span class="num">{{totalNum}}<small>{{totalUnit}}</small></span><span class="u">输出总伤 · 手法{{data.custom ? '自定义' : '默认'}}</span></div>
     </div>
     <div class="rank t-{{rankTier}}">
       <div class="disc"><span class="l{{data.rank.length > 3 ? 3 : data.rank.length}}">{{data.rank}}</span></div>
@@ -129,7 +131,7 @@
   </div>
 
   <div class="kpis">
-    <div class="kpi card total"><div class="v">{{totalNum}}<small>{{totalUnit}}</small></div><div class="k">输出总伤</div></div>
+    <div class="kpi card hero"><div class="v">{{data.dps}}</div><div class="k">DPS</div></div>
     <div class="kpi card"><div class="v">{{data.tm}}s</div><div class="k">输出轴长</div></div>
     <div class="kpi card"><div class="v">{{data.damages.length}}</div><div class="k">伤害次数</div></div>
     {{if maxHit}}<div class="kpi card"><div class="v">{{maxHit.crit}}</div><div class="k">最高一击 · {{maxHit.action}}</div></div>{{/if}}
