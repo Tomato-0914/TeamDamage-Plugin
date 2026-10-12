@@ -212,7 +212,8 @@ export async function team(e, tokens, uid) {
   const tips = [`UID${uid}：${isData}`, `手法：[${custom ? '自定义' : '默认'}]`]
   if (loadoutTips.length) tips.push(`换装：${loadoutTips.join('；')}`)
   if (loadoutWarns.length) tips.push(`注意：${loadoutWarns.join('；')}`)
-  await e.reply(tips.join('\n'))
+  // 提示信息 5 秒后自动撤回，避免刷屏
+  await e.reply(tips.join('\n'), false, { recallMsg: 5 })
   logger.info(logger.cyan(`[${pluginName}]队伍伤害[请求UID:${uid}]>>>${isData}${custom ? ` 手法:${JSON.stringify(custom.combo)}` : ''}${loadoutTips.length ? ` 换装:${loadoutTips.join('；')}` : ''}`))
 
   let TiwateBody = {uid, role_data, server: getServer(uid, true)}
