@@ -11,6 +11,9 @@ const OTHER_COLOR = '#9aa3b2'
 
 const toNum = (v) => Number(String(v ?? '').replace(/,/g, '')) || 0
 
+/** 伤害数值简写：1234567 → 123.5W，不足一万原样显示 */
+const fmtW = (v) => v >= 10000 ? `${Math.round(v / 1000) / 10}W` : String(Math.round(v))
+
 /** 色块上的文字颜色：小助手的角色色有亮黄、亮绿这类浅色，白字会看不清 */
 function textOn (color) {
   const m = String(color).match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i)
@@ -72,10 +75,14 @@ export default function buildScreenView (data, resolveName, miaoRes, exists) {
       const owner = ownerOf(d[1]) || ''
       bins[i][owner] = (bins[i][owner] || 0) + toNum(d[4])
     }
-    const binMax = Math.max(...bins.map(b => Object.values(b).reduce((p, c) => p + c, 0))) || 1
+    const binSums = bins.map(b => Object.values(b).reduce((p, c) => p + c, 0))
+    const binMax = Math.max(...binSums) || 1
+    const peakAt = binSums.indexOf(binMax)
     hasOther = bins.some(b => b[''])
     timeline = bins.map((b, t) => ({
       t,
+      // 最高的一根柱子标出该秒的期望伤害
+      peak: t === peakAt ? fmtW(binMax) : '',
       segs: Object.entries(b).map(([n, v]) => ({ h: Math.round(v / binMax * 100), color: colors[n] || OTHER_COLOR }))
     }))
   }

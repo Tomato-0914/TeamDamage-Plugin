@@ -87,13 +87,18 @@
   .av .gear .gi b.max { background: linear-gradient(135deg, #ffcf5a, #e8962a); }
   .av .kv { display: flex; justify-content: space-between; font-size: 15px; color: var(--sub); padding: 3px 2px; border-top: 1px dashed var(--line); }
   .av .kv b { font-family: "NumFont"; font-weight: 400; color: var(--ink); font-size: 17px; }
+  /* 天赋 10 级（满级）及以上（命座等额外提升，最高 15）用金色 */
+  .av .kv b .lv-hi { color: #d4880f; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chips span { font-size: 17px; padding: 4px 10px; border-radius: 7px; background: rgba(255,255,255,0.6); color: #3f3a46; }
   .chips span.k { background: rgba(var(--accent-rgb),0.16); color: var(--accent); }
 
   .tl { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: 0 2px; border-bottom: 1px solid var(--line); }
-  .tl .col { flex: 1; height: 100%; display: flex; flex-direction: column-reverse; }
+  .tl .col { flex: 1; height: 100%; display: flex; flex-direction: column-reverse; position: relative; }
+  /* 峰值标注：在最高柱子顶部 */
+  .tl { margin-top: 26px; }
+  .tl .col em { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); margin-bottom: 3px; white-space: nowrap; font-style: normal; font-family: "NumFont"; font-size: 15px; color: var(--accent); }
   .tl .col i { display: block; width: 100%; }
   .tlx { display: flex; gap: 4px; padding: 4px 2px 0; }
   .tlx span { flex: 1; text-align: center; font-size: 14px; color: var(--sub); font-family: "NumFont"; }
@@ -158,7 +163,7 @@
           <span class="gi"><img src="{{miaoRes}}meta-gs/weapon/{{a.weapon.imgPath}}/icon.webp">{{if a.weapon.affix}}<b class="{{a.weapon.affix >= 5 ? 'max' : ''}}">{{a.weapon.affix}}</b>{{/if}}</span>
           {{each a.relicSet v k}}<span class="gi"><img src="{{miaoRes}}meta-gs/artifact/imgs/{{k}}/1.webp"><b>{{v >= 4 ? 4 : 2}}</b></span>{{/each}}
         </div>
-        <div class="kv"><span>天赋</span><b>{{each a.skills s i}}{{if i}}/{{/if}}{{s.level}}{{/each}}</b></div>
+        <div class="kv"><span>天赋</span><b>{{each a.skills s i}}{{if i}}/{{/if}}<span class="{{s.level >= 10 ? 'lv-hi' : ''}}">{{s.level}}</span>{{/each}}</b></div>
         <div class="kv"><span>暴击 / 暴伤</span><b>{{a.cp}} / {{a.cd}}</b></div>
         <div class="kv"><span>{{a.key_prop}}</span><b>{{a.key_value}}</b></div>
         <div class="kv"><span>充能满足</span><b>{{a.recharge.pct}}</b></div>
@@ -170,7 +175,7 @@
 
   <div class="sec card">
     <h3>伤害时间分布<small>每秒期望伤害，按角色堆叠</small></h3>
-    <div class="tl">{{each timeline b}}<div class="col">{{each b.segs s}}<i style="height:{{s.h}}%;background:{{s.color}}"></i>{{/each}}</div>{{/each}}</div>
+    <div class="tl">{{each timeline b}}<div class="col">{{if b.peak}}<em>{{b.peak}}</em>{{/if}}{{each b.segs s}}<i style="height:{{s.h}}%;background:{{s.color}}"></i>{{/each}}</div>{{/each}}</div>
     <div class="tlx">{{each timeline b}}<span>{{b.t}}</span>{{/each}}</div>
     <div class="lg">{{each share s}}<span><i style="background:{{s.color}}"></i>{{s.char}}</span>{{/each}}{{if hasOther}}<span><i style="background:#9aa3b2"></i>反应 / 其他</span>{{/if}}</div>
   </div>

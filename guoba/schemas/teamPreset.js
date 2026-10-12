@@ -1,7 +1,7 @@
-import { loadPresets, savePresets, toNameList } from '../../model/teamPreset.js'
+import { loadDefaultPresets, loadUserPresets, samePreset, savePresets, toNameList } from '../../model/teamPreset.js'
 import { parseCombo, splitTokens } from '../../apps/Teyvat/combo.js'
 
-/** 队伍预设：对应 config/SimpleTeamArr.yaml */
+/** 自定义队伍预设：对应 config/SimpleTeamArr.yaml；默认预设在 default_SimpleTeamArr.yaml，不在这里编辑 */
 export default [
   {
     // 只有一组配置，用 Divider 作标题；SOFT_GROUP_BEGIN 在插件详情弹窗里会显示成「未知的组件」
@@ -10,9 +10,9 @@ export default [
   },
   {
     field: 'teamPreset.teams',
-    label: '队伍简写',
+    label: '自定义队伍简写',
     helpMessage: '使用：#队伍伤害雷九',
-    bottomHelpMessage: '保存后写入 config/SimpleTeamArr.yaml 并立即生效，删除该文件即恢复默认预设',
+    bottomHelpMessage: `插件自带 ${loadDefaultPresets().length} 个默认预设（发送 #队伍伤害帮助 查看），始终可用；这里只需添加新的队伍，或填写同名简写来覆盖默认预设。保存后写入 config/SimpleTeamArr.yaml 并立即生效`,
     component: 'GSubForm',
     componentProps: {
       multiple: true,
@@ -65,10 +65,10 @@ export default [
   }
 ]
 
-/** 读取：转成表单需要的格式 */
+/** 读取：只显示自定义预设，转成表单需要的格式 */
 export function getData () {
   return {
-    teams: loadPresets().map(p => ({ name: p.name, chars: p.chars.join('，'), combo: p.combo, alias: p.alias }))
+    teams: loadUserPresets().map(p => ({ name: p.name, chars: p.chars.join('，'), combo: p.combo, alias: p.alias }))
   }
 }
 
@@ -112,5 +112,7 @@ export async function setData (data) {
     names.add(name)
     presets.push({ name, alias, chars, combo })
   }
-  savePresets(presets)
+  // 与默认预设完全相同的不必另存，默认预设更新时才能生效
+  const defaults = loadDefaultPresets()
+  savePresets(presets.filter(p => !defaults.some(d => samePreset(d, p))))
 }
