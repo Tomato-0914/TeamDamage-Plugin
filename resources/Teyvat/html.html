@@ -79,7 +79,12 @@
   .av .name { text-align: center; font-size: 21px; }
   .av .meta { text-align: center; font-size: 14px; color: var(--sub); margin-top: 2px; }
   .av .gear { display: flex; justify-content: center; gap: 6px; margin: 8px 0; }
-  .av .gear img { width: 42px; height: 42px; border-radius: 8px; background: var(--soft); }
+  .av .gear img { width: 42px; height: 42px; border-radius: 8px; background: var(--soft); display: block; }
+  /* 右下角角标：武器精炼 / 圣遗物件数（4 件套显示 4，2 件套显示 2），精 5 金色 */
+  .av .gear .gi { position: relative; }
+  .av .gear .gi b { position: absolute; right: -5px; bottom: -4px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; border: 1.5px solid #fff;
+    font-family: "NumFont"; font-weight: 400; font-size: 13px; line-height: 15px; text-align: center; color: #fff; background: rgba(40,36,48,0.78); }
+  .av .gear .gi b.max { background: linear-gradient(135deg, #ffcf5a, #e8962a); }
   .av .kv { display: flex; justify-content: space-between; font-size: 15px; color: var(--sub); padding: 3px 2px; border-top: 1px dashed var(--line); }
   .av .kv b { font-family: "NumFont"; font-weight: 400; color: var(--ink); font-size: 17px; }
 
@@ -150,8 +155,8 @@
         <div class="name">{{a.name}}</div>
         <div class="meta">C{{a.cons}} · Lv{{a.level}}</div>
         <div class="gear">
-          <img src="{{miaoRes}}meta-gs/weapon/{{a.weapon.imgPath}}/icon.webp">
-          {{each a.relicSet v k}}<img src="{{miaoRes}}meta-gs/artifact/imgs/{{k}}/1.webp">{{/each}}
+          <span class="gi"><img src="{{miaoRes}}meta-gs/weapon/{{a.weapon.imgPath}}/icon.webp">{{if a.weapon.affix}}<b class="{{a.weapon.affix >= 5 ? 'max' : ''}}">{{a.weapon.affix}}</b>{{/if}}</span>
+          {{each a.relicSet v k}}<span class="gi"><img src="{{miaoRes}}meta-gs/artifact/imgs/{{k}}/1.webp"><b>{{v >= 4 ? 4 : 2}}</b></span>{{/each}}
         </div>
         <div class="kv"><span>天赋</span><b>{{each a.skills s i}}{{if i}}/{{/if}}{{s.level}}{{/each}}</b></div>
         <div class="kv"><span>暴击 / 暴伤</span><b>{{a.cp}} / {{a.cd}}</b></div>
