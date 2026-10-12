@@ -16,6 +16,7 @@ export default {
     { code: '长e / e2', mean: '长按元素战技' },
     { code: 'q / 大招 / 爆发', mean: '元素爆发' },
     { code: '重击 / z / zj', mean: '重击' },
+    { code: '下落攻击 / 下落 / xl', mean: '下落攻击（如魈）' },
     { code: 'a / 普攻 / 平a', mean: '普攻，紧跟同一角色普攻时接续下一段（aaa = 第 1~3 段）' },
     { code: 'a1 ~ a9', mean: '普攻第 N 段' },
     { code: '跳跃 / 跳 / k', mean: '跳跃，之后的 a 从第 1 段开始' },
