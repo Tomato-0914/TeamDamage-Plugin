@@ -1,15 +1,15 @@
 # TeamDamage-Plugin
 
-Yunzai-Bot / Miao-Yunzai 原神队伍伤害插件，基于 [FanSky_Qs](https://github.com/AFanSKyQs/FanSky_Qs) 精简而来，只保留队伍伤害功能，并支持自定义手法。
+TRSS-Yunzai / Miao-Yunzai 原神队伍伤害插件，基于 [FanSky_Qs](https://github.com/AFanSKyQs/FanSky_Qs) 精简而来，只保留队伍伤害功能，并支持自定义手法。
 
 ## 前置要求
 
-- [Miao-Yunzai](https://gitee.com/yoimiya-kokomi/Miao-Yunzai)
+- [TRSS-Yunzai](https://github.com/TimeRainStarSky/Yunzai) 或 [Miao-Yunzai](https://gitee.com/yoimiya-kokomi/Miao-Yunzai)
 - [miao-plugin](https://gitee.com/yoimiya-kokomi/miao-plugin)（读取角色面板数据及渲染资源）
 
 ## 安装
 
-在 `Miao-Yunzai` 根目录下：
+在云崽根目录下：
 
 ```
 git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugins/TeamDamage-Plugin/
@@ -20,19 +20,26 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 | 指令 | 说明 |
 |---|---|
 | `#队伍伤害钟离，阿贝多，可莉，魈` | 使用已绑定的 uid 计算队伍伤害（最多 4 人，只写一个角色时按单人计算） |
-| `#队伍伤害100000000钟离，阿贝多` | 指定 uid 计算 |
+| `#队伍伤害100000000钟离，阿贝多` | 指定 uid（9~10 位数字）计算 |
 | `#队伍伤害@张三 钟离，阿贝多` | 计算被艾特用户的队伍 |
-| `#队伍伤害雷九` | 使用队伍简写 |
+| `#队伍伤害雷九` / `#队伍伤害纳塔战舰` | 使用队伍简写或其别名（见下文「队伍简写」） |
 | `#队伍伤害钟离，班尼特，香菱，行秋 钟离长e，班尼特eq，香菱q，e` | 自定义手法 |
 | `#队伍伤害香菱换六命换精5，行秋，班尼特` | 换装模拟（见下文） |
 | `#队伍伤害帮助` | 以图片形式查看全部写法 |
 | `#更新队伍伤害` / `#强制更新队伍伤害` | 更新插件并自动重启（主人）；强制更新会丢弃本地改动 |
 
-计算前需先通过 `#更新面板` 获取对应角色的面板数据。
+计算前需先通过 `#更新面板` 获取对应角色的面板数据。出图前会先发一条队伍、手法、换装的提示，5 秒后自动撤回。
 
 旅行者可写 `旅行者` / `空` / `荧` / `草主` / `雷主` 等，按面板里当前的元素计算（面板只保存最后一次更新时的元素，写的元素与面板不一致时会提示切换后再更新面板，也可以用换装 `旅行者换雷` 按当前面板估算）；冰主提瓦特小助手暂不支持。
 
-结果图依次展示：DPS 与评级、队伍与输出占比、伤害时间分布（每秒期望伤害，按角色堆叠）、手法、伤害过程（两栏排列，最高一击高亮）、Buff 情况。背景取主 C 立绘，配色随主 C 元素变化。
+结果图依次展示：
+
+- **顶部**：输出总伤、伤害评级（超过全服百分比）；数据卡为 DPS、输出轴长、伤害次数、最高一击
+- **队伍与输出占比**：每个角色的命座、等级、武器与圣遗物（右下角角标为武器精炼 / 圣遗物件数，4~5 件显示 4，2~3 件显示 2）、天赋（10 级及以上金色）、双暴、关键属性、充能、输出占比
+- **伤害时间分布**：每秒期望伤害，按角色堆叠，最高一秒标注数值
+- **操作手法**、**伤害过程**（两栏排列，最高一击高亮）、**Buff 情况**（两栏排列）
+
+背景取主 C 立绘，配色随主 C 元素变化。
 
 ### 自定义手法
 
@@ -92,10 +99,12 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 
 ### 队伍简写
 
-默认简写见 `config/default_SimpleTeamArr.yaml`。自定义方式任选其一，修改即时生效：
+插件自带的默认预设在 `config/default_SimpleTeamArr.yaml`，随插件更新，请勿修改。除了雷九、胡行钟香等经典队伍，也收录了玛希茜班（纳塔战舰）、仆希茜班（仆人战舰）、丝爱芙莫（丝柯克冰队）、菲机少砂（月感电）、兹少叶莉（月结晶）、法杜布尼（魔导战舰）、奈菈少妮（运钞车）、那芙希万（枫丹战舰）、瓦玛夏伊（瓦雷莎超载）等较新的配队，括号内为可用的别名。
 
-- **锅巴**：安装 [Guoba-Plugin](https://gitee.com/guoba-yunzai/guoba-plugin) 后，在锅巴后台「插件管理 → 队伍伤害」中增删队伍预设（简写、角色、手法、别名），保存时会校验角色名和手法
-- **手动**：复制默认文件为同目录下的 `SimpleTeamArr.yaml` 后修改
+自定义预设存放在 `config/SimpleTeamArr.yaml`，**只需写新增或要覆盖的队伍**，修改即时生效：
+
+- **锅巴**：安装 [Guoba-Plugin](https://gitee.com/guoba-yunzai/guoba-plugin) 后，在锅巴后台「插件管理 → 队伍伤害」中增删自定义预设（简写、角色、手法、别名），保存时会校验角色名和手法；与默认预设完全相同的条目会自动跳过
+- **手动**：在 `config/` 下新建 `SimpleTeamArr.yaml`，格式同默认文件
 
 每个预设可以带一套手法（YAML 中的 `combo` 字段，写法同指令）：留空走小助手默认手法，填写后使用该预设时自动套用；指令里另写了手法时以指令为准。
 
@@ -103,7 +112,7 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 雷九: { alias: [ 雷九万班 ], chars: [ 雷电将军, 九条裟罗, 枫原万叶, 班尼特 ], combo: 雷神e，九条裟罗e，万叶e，班尼特q，雷神q }
 ```
 
-自定义文件存在时会完全取代默认预设，删除它即可恢复默认。
+自定义预设与默认预设同名时以自定义为准，其余默认预设照常可用；删除自定义文件即只使用默认预设。
 
 ## 致谢
 
