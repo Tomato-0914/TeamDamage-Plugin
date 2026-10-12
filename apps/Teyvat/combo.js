@@ -120,15 +120,18 @@ function splitToken (token, resolveName) {
 
 /**
  * 把指令里的 token 分成「队伍」和「手法」两段：从第一个能识别为动作的 token 起都算手法
+ * 手法段里出现的换装（如只写手法时末尾的「爱可菲换1命」）单独拿出来，由调用方接到对应队员上
  * @param {string[]} tokens
  * @param {(name: string) => string|null} resolveName
+ * @returns {{teamTokens: string[], comboTokens: string[], loadoutTokens: string[]}}
  */
 export function splitTeamAndCombo (tokens, resolveName) {
   // 带换装的队员（香菱换六命）一定是队伍，不参与手法识别
   const isMember = (t) => t.indexOf('换') > 0 && !!resolveName(t.slice(0, t.indexOf('换')))
   const idx = tokens.findIndex((t) => !isMember(t) && (WAIT_LIKE.test(t) || splitToken(t, resolveName)))
-  if (idx === -1) return { teamTokens: tokens, comboTokens: [] }
-  return { teamTokens: tokens.slice(0, idx), comboTokens: tokens.slice(idx) }
+  if (idx === -1) return { teamTokens: tokens, comboTokens: [], loadoutTokens: [] }
+  const rest = tokens.slice(idx)
+  return { teamTokens: tokens.slice(0, idx), comboTokens: rest.filter(t => !isMember(t)), loadoutTokens: rest.filter(isMember) }
 }
 
 /**

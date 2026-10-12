@@ -67,6 +67,22 @@ function resolveName(name) {
   return char ? stdName(char) : null
 }
 
+/**
+ * 把「角色换xx」接到队伍里对应队员的后面（按标准名匹配，支持别名）
+ * @param {string[]} members 队员列表，会被直接修改
+ * @param {string[]} tokens 换装 token
+ * @returns {string} 找不到对应队员时返回「角色名」，否则返回空字符串
+ */
+function attachLoadouts(members, tokens) {
+  for (const t of tokens) {
+    const std = resolveName(parseMember(t).name)
+    const idx = members.findIndex(c => resolveName(parseMember(c).name) === std)
+    if (idx === -1) return `「${std}」`
+    members[idx] += t.slice(t.indexOf('换'))
+  }
+  return ''
+}
+
 /** 旅行者写法里明确带了元素（草主、旅行者雷），返回 miao 元素 key */
 function travelerElem(name, char) {
   return /[风岩雷草水火冰]/.test(name.replace(TRAVELER_WORDS, '')) ? char.elem : ''
@@ -79,7 +95,7 @@ function travelerElem(name, char) {
  * @param uid 查询 uid
  */
 export async function team(e, tokens, uid) {
-  let {teamTokens: teamlist, comboTokens} = splitTeamAndCombo(tokens, resolveName)
+  let {teamTokens: teamlist, comboTokens, loadoutTokens} = splitTeamAndCombo(tokens, resolveName)
   let inferred = false
   // 使用了带手法的队伍预设、且指令里没写手法时，记下预设名用于报错提示
   let presetCombo = ''
@@ -96,15 +112,11 @@ export async function team(e, tokens, uid) {
   const preset = presetCandidate ? findPreset(head) : null
   if (preset) {
     const chars = [...preset.chars]
-    for (const t of overrides) {
-      const std = resolveName(parseMember(t).name)
-      const idx = chars.findIndex(c => resolveName(parseMember(c).name) === std)
-      if (idx === -1) {
-        await e.reply(`「${std}」不在队伍预设「${preset.name}」里（${chars.map(c => parseMember(c).name).join('、')}）`, true)
-        return true
-      }
-      // 接在预设自带的换装后面，同一项以指令里写的为准
-      chars[idx] += t.slice(t.indexOf('换'))
+    // 接在预设自带的换装后面，同一项以指令里写的为准
+    const err = attachLoadouts(chars, overrides)
+    if (err) {
+      await e.reply(`${err}不在队伍预设「${preset.name}」里（${chars.map(c => parseMember(c).name).join('、')}）`, true)
+      return true
     }
     // 指令里写了手法优先用指令的，否则用预设手法，预设也没写则走小助手默认手法
     if (!comboTokens.length && preset.combo) {
@@ -123,6 +135,15 @@ export async function team(e, tokens, uid) {
       return true
     }
     teamlist = teamlist.slice(0, 4)
+  }
+
+  // 写在手法里的换装（只写手法时只能写在这里）接到对应队员上
+  if (loadoutTokens.length) {
+    const err = attachLoadouts(teamlist, loadoutTokens)
+    if (err) {
+      await e.reply(`换装里的${err}不在队伍里（${teamlist.map(c => parseMember(c).name).join('、')}）`, true)
+      return true
+    }
   }
 
   // 队员可带换装：香菱换六命换精5
