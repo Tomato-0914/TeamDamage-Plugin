@@ -102,7 +102,12 @@ export default function buildScreenView (data, resolveName, miaoRes, exists) {
   // 标题下的队员名，名字长时缩小字号，避免压到评级徽章
   const teamLine = Object.keys(data.avatars).join(' / ')
 
+  // 输出总伤拆成数字和单位（如 376W），模板里单位用小字号
+  const totalMatch = String(data.total ?? '').trim().match(/^([\d.,]+)\s*(.*)$/)
+
   return {
+    totalNum: totalMatch ? totalMatch[1] : data.total,
+    totalUnit: totalMatch ? totalMatch[2] : '',
     rankTier,
     teamLine,
     teamLineSize: teamLine.length > 24 ? 16 : teamLine.length > 19 ? 18 : 21,

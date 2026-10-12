@@ -53,6 +53,14 @@
   .kpi { padding: 12px 16px; }
   .kpi .v { font-family: "NumFont"; font-size: 30px; }
   .kpi .k { font-size: 16px; color: var(--sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* 输出总伤：主数据，放大并用元素色渐变突出 */
+  .kpis { align-items: stretch; }
+  .kpi { display: flex; flex-direction: column; justify-content: flex-end; }
+  .kpi.total { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(var(--accent-rgb),0.26) 0, rgba(var(--accent-rgb),0.08) 55%, var(--card) 100%); border-color: rgba(var(--accent-rgb),0.45); box-shadow: 0 6px 24px rgba(var(--accent-rgb),0.22); }
+  .kpi.total::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 5px; border-radius: 0 4px 4px 0; background: var(--accent); }
+  .kpi.total .v { font-size: 48px; line-height: 1; letter-spacing: 1px; color: var(--accent); background: linear-gradient(180deg, rgba(var(--accent-rgb),0.7) 0, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 4px rgba(var(--accent-rgb),0.3)); }
+  .kpi.total .v small { font-size: 26px; margin-left: 3px; }
+  .kpi.total .k { color: var(--accent); font-weight: 700; }
 
   .sec { margin: 0 20px 14px; padding: 16px 18px; }
   .sec h3 { margin: 0 0 12px; font-size: 24px; display: flex; align-items: baseline; gap: 10px; }
@@ -121,7 +129,7 @@
   </div>
 
   <div class="kpis">
-    <div class="kpi card"><div class="v">{{data.total}}</div><div class="k">输出总伤</div></div>
+    <div class="kpi card total"><div class="v">{{totalNum}}<small>{{totalUnit}}</small></div><div class="k">输出总伤</div></div>
     <div class="kpi card"><div class="v">{{data.tm}}s</div><div class="k">输出轴长</div></div>
     <div class="kpi card"><div class="v">{{data.damages.length}}</div><div class="k">伤害次数</div></div>
     {{if maxHit}}<div class="kpi card"><div class="v">{{maxHit.crit}}</div><div class="k">最高一击 · {{maxHit.action}}</div></div>{{/if}}
