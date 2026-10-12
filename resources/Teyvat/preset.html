@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "PanelFont"; src: url({{pluResPath}}../fonts/HYWH-65W.ttf); }
+  :root { --ink: #2a2630; --sub: #7a7383; --box: #efe6dc; --accent: #c9763f; }
+  body { margin: 0; }
+  #container { width: 1080px; padding: 26px 24px 18px; box-sizing: border-box; background: linear-gradient(180deg, #f6f1ea, #efe9f3); color: var(--ink); font-family: "PanelFont", sans-serif; }
+  .top { display: flex; align-items: baseline; gap: 14px; padding: 0 6px 18px; }
+  .top .t { font-size: 34px; font-weight: 700; }
+  .top .v { font-size: 26px; color: var(--accent); }
+  .top .n { margin-left: auto; font-size: 18px; color: var(--sub); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { display: flex; flex-direction: column; background: #fff; border-radius: 16px; padding: 16px 18px 14px; box-shadow: 0 4px 16px rgba(60, 40, 30, 0.08); }
+  .card .name { font-size: 30px; font-weight: 700; line-height: 1.1; display: flex; align-items: center; gap: 10px; }
+  .card .name .tag { font-size: 14px; font-weight: 400; color: #fff; background: #9a8fa8; border-radius: 10px; padding: 2px 10px; }
+  .mem { display: flex; gap: 8px; margin: 12px 0; }
+  .box { flex: 1; }
+  .mem .m { width: 110px; border-radius: 10px; overflow: hidden; background: #f4ece4; text-align: center; }
+  .mem .m .f { width: 110px; height: 110px; display: block; background: linear-gradient(160deg, #8f7bb8, #c3a6de); }
+  .mem .m.s5 .f { background: linear-gradient(160deg, #b8784a, #e9b56c); }
+  .mem .m img { width: 110px; height: 110px; display: block; object-fit: cover; }
+  .mem .m .nm { font-size: 14px; padding: 3px 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .box { background: var(--box); border-radius: 12px; padding: 10px 14px; }
+  .box h4 { margin: 0 0 4px; font-size: 20px; }
+  .box .c { font-size: 18px; line-height: 1.5; word-break: break-all; }
+  .box .c.none { color: var(--sub); }
+  .alias { margin-top: 10px; font-size: 17px; color: var(--sub); }
+  .alias b { color: var(--ink); font-weight: 400; }
+  .foot { text-align: center; font-size: 14px; color: var(--sub); margin-top: 16px; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div class="top">
+    <span class="t">{{source.title}}</span><span class="v">{{group.title}}</span><span class="n">共 {{group.list.length}} 队{{if page}} · 第 {{page}} 页{{/if}}</span>
+  </div>
+  <div class="grid">
+    {{each list p}}
+    <div class="card">
+      <div class="name">{{p.name}}{{if p.overridden}}<span class="tag">已被同名自定义预设覆盖</span>{{/if}}</div>
+      <div class="mem">
+        {{each p.members m}}
+        <div class="m s{{m.star}}"><div class="f">{{if m.face}}<img src="{{m.face}}">{{/if}}</div><div class="nm">{{m.name}}</div></div>
+        {{/each}}
+      </div>
+      <div class="box">
+        <h4>操作手法</h4>
+        {{if p.combo}}<div class="c">{{p.combo}}</div>{{else}}<div class="c none">未设置，使用小助手默认手法</div>{{/if}}
+      </div>
+      <div class="alias">别名：<b>{{p.alias}}</b></div>
+    </div>
+    {{/each}}
+  </div>
+  <div class="foot">#队伍伤害+预设名 即可使用 · {{pluginName}}</div>
+</div>
+</body>
+</html>

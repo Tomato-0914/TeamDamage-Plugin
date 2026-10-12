@@ -5,6 +5,7 @@ import { team } from './getTeam.js'
 import { splitTokens } from './combo.js'
 import MysApi from './GetATUID.js'
 import helpData from './helpData.js'
+import { presetList } from './presetList.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import { pluginName, pluginRoot } from '../../model/path.js'
 
@@ -30,6 +31,11 @@ export class BotEntry extends plugin {
           fnc: 'help'
         },
         {
+          // 同样要放在计算指令前面，否则「预设」会被当成队伍名
+          reg: /^#队伍伤害预设列表$/,
+          fnc: 'presetList'
+        },
+        {
           reg: /^#队伍伤害(?:详情|过程|全图)?(\d{9,10})?(.*)$/,
           fnc: 'TeyvatEnTry'
         }
@@ -49,6 +55,10 @@ export class BotEntry extends plugin {
     })
     await e.reply(img)
     return true
+  }
+
+  async presetList (e) {
+    return presetList(e)
   }
 
   async GetNowUid (e) {
