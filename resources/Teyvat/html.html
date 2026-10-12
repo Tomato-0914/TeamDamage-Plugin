@@ -15,7 +15,7 @@
   #container.geo     { --bg: #f7f1e3; --h1: #fff8e6; --h2: #ffecc2; --h3: #ffdd96; --accent: #c98a12; --accent-rgb: 201,138,18;  --soft: #f8ebcc; }
   #container.dendro  { --bg: #edf6e7; --h1: #f3fbea; --h2: #def3c9; --h3: #c5e9a4; --accent: #5c9e2c; --accent-rgb: 92,158,44;   --soft: #e2f2d2; }
   body { margin: 0; }
-  #container { width: 960px; position: relative; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "PanelFont", sans-serif; padding-bottom: 16px; }
+  #container { width: 1120px; position: relative; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "PanelFont", sans-serif; padding-bottom: 16px; }
   /* 背景：主 C 立绘放大模糊 + 元素色调的浅色遮罩 */
   #container > .bgimg { position: absolute; inset: -80px; background: url({{splash}}) center 20% / cover no-repeat; filter: blur(36px) saturate(1.3); opacity: 0.9; }
   #container > .bgmask { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.35) 600px, rgba(255,255,255,0.45) 100%), linear-gradient(135deg, var(--h2), var(--h3)); mix-blend-mode: normal; opacity: 0.78; }
@@ -97,16 +97,19 @@
 
   .dmg { display: flex; gap: 16px; }
   .dmg table { flex: 1; border-collapse: collapse; font-size: 16px; align-self: flex-start; }
-  .dmg th { color: var(--sub); font-weight: 400; text-align: right; padding: 6px 6px; background: rgba(255,255,255,0.45); }
+  .dmg th { color: var(--sub); font-weight: 400; text-align: right; padding: 6px 6px; background: rgba(255,255,255,0.45); white-space: nowrap; }
+  .dmg td:first-child { white-space: nowrap; }
   .dmg th:nth-child(2), .dmg td:nth-child(2) { text-align: left; }
   .dmg td { padding: 4px 6px; text-align: right; font-family: "NumFont"; border-bottom: 1px solid var(--line); }
   .dmg td:nth-child(2) { font-family: "PanelFont"; white-space: nowrap; }
   .dmg td i { display: inline-block; width: 4px; height: 15px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
   .dmg tr.hot td { color: var(--accent); background: rgba(var(--accent-rgb),0.14); }
 
-  .buffs .it { display: flex; font-size: 17px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  /* Buff 两栏：按时间先排满左栏再排右栏 */
+  .buffs .list { column-count: 2; column-gap: 32px; }
+  .buffs .it { display: flex; font-size: 17px; padding: 7px 0; border-bottom: 1px solid var(--line); break-inside: avoid; }
   .buffs .t { flex: 0 0 66px; font-family: "NumFont"; color: var(--sub); }
-  .buffs .n { flex: 0 0 180px; color: var(--accent); }
+  .buffs .n { flex: 0 0 150px; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
   .foot { text-align: center; font-size: 14px; color: var(--sub); }
 </style>
 </head>
@@ -186,7 +189,7 @@
 
   <div class="sec card buffs">
     <h3>Buff 情况</h3>
-    {{each data.buffs b}}<div class="it"><span class="t">{{b[0]}}s</span><span class="n">{{b[1]}}</span><span>{{b[2]}}</span></div>{{/each}}
+    <div class="list">{{each data.buffs b}}<div class="it"><span class="t">{{b[0]}}s</span><span class="n">{{b[1]}}</span><span>{{b[2]}}</span></div>{{/each}}</div>
   </div>
   <div class="foot">TeamDamage-Plugin × Data from 提瓦特小助手</div>
 </div></div>
