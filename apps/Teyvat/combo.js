@@ -20,7 +20,8 @@ const MAX_ACTIONS = 60
 
 /** 动作写法，长写法在前；每项返回技能码数组 */
 const ACTION_PATTERNS = [
-  [/^等待?(\d+(?:\.\d+)?)(?:s|秒)?/i, (m) => {
+  // 等待：等0.5 / 等待1s / d0.5 / D1
+  [/^(?:等待?|d)(\d+(?:\.\d+)?)(?:s|秒)?/i, (m) => {
     const sec = Math.round(Number(m[1]) * 100) / 100
     return sec >= WAIT_MIN && sec <= WAIT_MAX ? [['==', sec]] : null
   }],
@@ -45,7 +46,7 @@ export function splitTokens (text) {
 }
 
 /** 看起来是等待的 token（时间可能超范围），用于识别手法起点和给出准确的报错 */
-const WAIT_LIKE = /^等待?\d/
+const WAIT_LIKE = /^(?:等待?|d)\d/i
 
 export function isWait (code) {
   return Array.isArray(code) && code[0] === '=='
@@ -168,7 +169,7 @@ export function parseCombo (tokens, teamNames, resolveName) {
   for (const token of tokens) {
     const part = splitToken(token, resolveName)
     if (!part) {
-      if (WAIT_LIKE.test(token)) return { error: `等待时间需在 ${WAIT_MIN}~${WAIT_MAX} 秒之间，例如：等0.5` }
+      if (WAIT_LIKE.test(token)) return { error: `等待时间需在 ${WAIT_MIN}~${WAIT_MAX} 秒之间，例如：等0.5 或 d0.5` }
       return { error: `手法中的「${token}」无法识别` }
     }
     if (part.name) {
@@ -210,7 +211,7 @@ export const COMBO_USAGE = [
   '手法写在队伍后面：#队伍伤害 钟离,班尼特,香菱,行秋 钟离长e,班尼特eq,香菱q,e',
   '也可只写手法，队伍按出场顺序自动识别：#队伍伤害 钟离长e,班尼特eq,香菱q,行秋qe',
   '动作：e / 短e / 长e / q / 重击(z/zj) / 下落攻击(下落/xl) / a(普攻，连写aaa=1~3段) / a1~a9(指定段数)',
-  '跳跃(k) / 闪避(s)；等待(等0.5)',
+  '跳跃(k) / 闪避(s)；等待(等0.5 / d0.5)',
   '省略角色名则沿用上一个角色；可连写(班尼特eq、胡桃azk)、重复(a1*3、重击3次)',
   '全部写法（含换装）发 #队伍伤害帮助 查看'
 ].join('\n')
