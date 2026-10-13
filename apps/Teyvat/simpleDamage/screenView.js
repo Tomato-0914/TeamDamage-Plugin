@@ -118,6 +118,8 @@ export default function buildScreenView (data, resolveName, miaoRes, exists) {
     totalUnit: totalMatch ? totalMatch[2] : '',
     totalLong: totalNum.length > 5,
     rankTier,
+    // 全服百分位（超过 xx% 的玩家），评级横幅的进度条用；小助手没返回时为 0，不显示进度条
+    rankPct: Number((String(data.rankTip || '').match(/([\d.]+)%/) || [])[1]) || 0,
     teamLine,
     teamLineSize: teamLine.length > 24 ? 16 : teamLine.length > 19 ? 18 : 21,
     elemKey: ELEM_KEY[data.elem] || ELEM_KEY[data.avatars[mainChar]?.elem] || 'pyro',
