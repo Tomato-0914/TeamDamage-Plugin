@@ -29,11 +29,11 @@
   .head .title { font-size: 34px; font-weight: 700; margin-top: 4px; white-space: nowrap; }
   .head .title .pn { color: var(--accent); }
   .head .team { font-size: 21px; color: #5d5866; margin-top: 4px; }
-  /* 输出总伤：全图最大的数字，元素色渐变 + 白描边 + 外发光 */
+  /* 输出总伤：全图最大的数字，加粗 + 元素色渐变 + 外发光 */
   .head .big { display: flex; align-items: center; gap: 16px; margin-top: 10px; }
-  .head .big .num { font-family: "NumFont"; font-size: 104px; line-height: 1; letter-spacing: 1px;
-    background: linear-gradient(180deg, rgba(var(--accent-rgb),0.72) 0%, var(--accent) 55%); -webkit-background-clip: text; background-clip: text; color: transparent;
-    -webkit-text-stroke: 3px rgba(255,255,255,0.95); paint-order: stroke fill; filter: drop-shadow(0 6px 14px rgba(var(--accent-rgb),0.45)); }
+  .head .big .num { font-family: "NumFont"; font-weight: 900; font-size: 104px; line-height: 1; letter-spacing: 2px;
+    background: linear-gradient(180deg, rgba(var(--accent-rgb),0.78) 0%, var(--accent) 55%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 6px 14px rgba(var(--accent-rgb),0.45)); }
   .head .big .num small { font-size: 60px; margin-left: 6px; }
   .head .big.long .num { font-size: 84px; }
   .head .big.long .num small { font-size: 50px; }
