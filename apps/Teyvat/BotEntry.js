@@ -44,6 +44,11 @@ export class BotEntry extends plugin {
         {
           reg: /^#队伍伤害(?:详情|过程|全图)?(\d{9,10})?(.*)$/,
           fnc: 'TeyvatEnTry'
+        },
+        {
+          // 测试版：用本地 GCSim 计算，写法与 #队伍伤害 相同，但必须带手法
+          reg: /^#队伍模拟(\d{9,10})?(.*)$/,
+          fnc: 'GcsimEntry'
         }
       ]
     })
@@ -92,10 +97,18 @@ export class BotEntry extends plugin {
   }
 
   async TeyvatEnTry (e) {
-    let at = e.at
     // 结果图固定展示伤害过程，旧的 详情/过程/全图 前缀仍兼容但不再区分
-    const regexTeam = /^#队伍伤害(?:详情|过程|全图)?(\d{9,10})?(.*)$/
-    const matchTeam = e.msg.match(regexTeam)
+    return this.calc(e, e.msg.match(/^#队伍伤害(?:详情|过程|全图)?(\d{9,10})?(.*)$/), 'teyvat')
+  }
+
+  async GcsimEntry (e) {
+    return this.calc(e, e.msg.match(/^#队伍模拟(\d{9,10})?(.*)$/), 'gcsim')
+  }
+
+  /** @param {'teyvat'|'gcsim'} engine 计算引擎：提瓦特小助手 / 本地 GCSim */
+  async calc (e, matchTeam, engine) {
+    const cmd = engine === 'gcsim' ? '#队伍模拟' : '#队伍伤害'
+    let at = e.at
     let uid = matchTeam[1] ? matchTeam[1] : await this.GetNowUid(e)
     if (at) {
       let AT_UID = await MysApi.getAT_UID(e, 'all')
@@ -112,14 +125,14 @@ export class BotEntry extends plugin {
     let roleList = matchTeam[2]
     logger.info(e.msg)
     if (!uid) {
-      e.reply('尚未绑定uid，请先【#绑定xxx】\n直接指定查询：#队伍伤害100000000钟离，阿贝多，可莉,魈')
+      e.reply(`尚未绑定uid，请先【#绑定xxx】\n直接指定查询：${cmd}100000000钟离，阿贝多，可莉,魈`)
       return true
     }
     if (!roleList) {
-      e.reply('指令错误，使用例子：\n#队伍伤害(@张三)钟离，阿贝多，可莉，魈\n#队伍伤害100000000钟离，阿贝多，可莉，魈\n#队伍伤害钟离，班尼特，香菱，行秋 钟离长e，班尼特eq，香菱q，e', true, { recallMsg: 30 })
+      e.reply(`指令错误，使用例子：\n${cmd}(@张三)钟离，阿贝多，可莉，魈\n${cmd}100000000钟离，阿贝多，可莉，魈\n${cmd}钟离，班尼特，香菱，行秋 钟离长e，班尼特eq，香菱q，e`, true, { recallMsg: 30 })
       return true
     }
-    await team(e, splitTokens(roleList), uid)
+    await team(e, splitTokens(roleList), uid, engine)
     return true
   }
 }

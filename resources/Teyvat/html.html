@@ -151,6 +151,7 @@
     </div>
   </div>
 
+  {{if data.rank}}
   <div class="rankbar t-{{rankTier}}">
     <div class="tag"><b>{{data.rank}}</b><i>伤害评级</i></div>
     {{if rankPct}}
@@ -161,6 +162,7 @@
     </div>
     {{/if}}
   </div>
+  {{/if}}
 
   <div class="kpis">
     <div class="kpi card hero"><div class="v">{{data.dps}}</div><div class="k">DPS</div></div>
@@ -208,7 +210,7 @@
 
   {{if showDamages}}
   <div class="sec card">
-    <h3>伤害过程<small>以 90 级怪物为基准，总伤与 DPS 为 1.25 倍期望伤害</small></h3>
+    <h3>伤害过程<small>{{data.dmgNote || '以 90 级怪物为基准，总伤与 DPS 为 1.25 倍期望伤害'}}</small></h3>
     <div class="dmg">
       {{each dmgCols col}}
       <table>
@@ -220,11 +222,13 @@
   </div>
   {{/if}}
 
+  {{if data.buffs && data.buffs.length}}
   <div class="sec card buffs">
     <h3>Buff 情况</h3>
     <div class="list">{{each data.buffs b}}<div class="it"><span class="t">{{b[0]}}s</span><span class="n">{{b[1]}}</span><span>{{b[2]}}</span></div>{{/each}}</div>
   </div>
-  <div class="foot">TeamDamage-Plugin × Data from 提瓦特小助手</div>
+  {{/if}}
+  <div class="foot">TeamDamage-Plugin × Data from {{data.source || '提瓦特小助手'}}</div>
 </div></div>
 </body>
 </html>

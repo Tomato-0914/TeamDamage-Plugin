@@ -129,9 +129,37 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 | `sendTips` | `true` | 计算前是否发送提示信息；关闭后只在有换装警告时发送 |
 | `tipsRecall` | `5` | 提示信息自动撤回的秒数，0 为不撤回，最长 120 秒 |
 
+## GCSim 本地计算（测试版）
+
+`#队伍模拟` 不经过提瓦特小助手，在本机用开源模拟器 [GCSim](https://github.com/genshinsim/gcsim)（MIT）计算，写法与 `#队伍伤害` 相同（UID、@、队伍简写、换装都能用），但**必须写手法**（或使用带手法的队伍预设）：
+
+```
+#队伍模拟钟离，夜兰，行秋，胡桃 钟离长e，夜兰qe，行秋qe，胡桃e azk*4 q
+```
+
+和小助手的区别：
+
+- 没有默认手法、没有伤害评级和全服排名、没有 Buff 列表
+- 只跑一次模拟，总伤按每一击的期望伤害（暴击率 × 暴伤）累加；怪物 90 级、10% 抗性，开局满能量，大招不检查能量
+- 手法按游戏规则校验，例如单手剑 / 长柄武器普攻最后一段后不能直接重击（`a*5 z` 要写成 `a*4 z`），下落攻击只能在魈 Q 等空中状态下使用
+- 剧变反应（超载、感电、扩散等）在输出占比里单独列出；主C满暴 / 全队满暴设置同样生效，且不需要重新计算
+- 少数新角色、低星武器 GCSim 暂不支持，会直接提示
+
+### 安装 GCSim
+
+需要自行准备 GCSim 命令行程序，放到插件目录的 `bin/gcsim`（Windows 为 `bin/gcsim.exe`），或在 `config.yaml` 里用 `gcsimPath` 指定路径。用 Go（1.22+）从源码编译：
+
+```bash
+git clone --depth=1 https://github.com/genshinsim/gcsim.git
+cd gcsim
+go build -o ../plugins/TeamDamage-Plugin/bin/gcsim ./cmd/gcsim   # 路径按实际的 Yunzai 目录调整
+```
+
+编译出的程序约 40MB，只需编译一次；GCSim 更新角色后重新编译即可。
+
 ## 致谢
 
-- 伤害计算：提瓦特小助手
+- 伤害计算：提瓦特小助手；`#队伍模拟` 使用 [GCSim](https://github.com/genshinsim/gcsim)
 - [@AFanSKyQs](https://github.com/AFanSKyQs)（[FanSky_Qs](https://github.com/AFanSKyQs/FanSky_Qs) 原作者）
 - [@yoimiya-kokomi](https://github.com/yoimiya-kokomi)（Miao-Yunzai、miao-plugin 资源与数据）
 - [@monsterxcn](https://github.com/monsterxcn)（[nonebot-plugin-gspanel](https://github.com/monsterxcn/nonebot-plugin-gspanel)）

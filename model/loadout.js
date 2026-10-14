@@ -30,7 +30,7 @@ const ELEM_KEY = { 风: 'anemo', 岩: 'geo', 雷: 'electro', 草: 'dendro', 水:
 const ELEM_CN = lodash.invert(ELEM_KEY)
 const ELEM_DMG = { pyro: 'fire_dmg', hydro: 'water_dmg', cryo: 'ice_dmg', electro: 'thunder_dmg', anemo: 'wind_dmg', geo: 'rock_dmg', dendro: 'grass_dmg' }
 /** 旅行者 3/5 命加天赋的顺序随元素变化（与 miao Character.talentCons 一致） */
-const travelerTalentCons = (elem) => (['dendro', 'hydro', 'pyro'].includes(elem) ? { e: 3, q: 5 } : { e: 5, q: 3 })
+export const travelerTalentCons = (elem) => (['dendro', 'hydro', 'pyro'].includes(elem) ? { e: 3, q: 5 } : { e: 5, q: 3 })
 
 export const LOADOUT_USAGE = '支持：换满命 / 换六命 / 换精五 / 换满精 / 换天赋101313 / 换90级 / 换武器名（护摩、讨龙、专武）/ 换4千岩 / 换2追忆2如雷 / 旅行者换雷'
 

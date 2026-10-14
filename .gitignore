@@ -11,3 +11,6 @@ config/config.yaml
 
 # 日志
 *.log
+
+# GCSim 可执行文件（#队伍模拟 使用，需自行编译或下载）
+bin/
