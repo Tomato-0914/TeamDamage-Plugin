@@ -211,10 +211,11 @@ export function applyLoadout (roleData, panel, mods, profile) {
     panel.cons = mods.cons
     labels.push(`${mods.consAlias ?? mods.cons}命`)
     // 3/5 命的天赋 +3：服务端不会自己加，没指定天赋时按命座变化补上或撤掉
+    // 加哪项取 miao 的 talentCons，阿蕾奇诺、那维莱特等 3 命加的是普攻
     if (!mods.talent && !switchElem) {
       let changed = false
       const talentCons = profile.char?.talentCons || {}
-      for (const [key, field] of [['e', 'ability2'], ['q', 'ability3']]) {
+      for (const [key, field] of [['a', 'ability1'], ['e', 'ability2'], ['q', 'ability3']]) {
         const need = talentCons[key]
         if (!need) continue
         const delta = (mods.cons >= need ? 3 : 0) - (oldCons >= need ? 3 : 0)
