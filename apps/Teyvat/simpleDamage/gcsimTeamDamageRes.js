@@ -21,7 +21,8 @@ export default function gcsimTeamDamageRes (parsed, rolesData, names, uid, actio
   const avatars = {}
   names.forEach((name, i) => {
     const panel = rolesData[name]
-    const [keyProp, field] = KEY_STAT[parsed.keyStat[i]] || KEY_STAT.atk
+    // 优先用 miao 的属性权重，没有时按 GCSim 里期望伤害最多的倍率属性
+    const [keyProp, field] = KEY_STAT[panel.keyStat || parsed.keyStat[i]] || KEY_STAT.atk
     const imgName = panel.imgName || name
     avatars[name] = {
       name,

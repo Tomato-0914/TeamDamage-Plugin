@@ -543,6 +543,10 @@ async function covProfileroleData(profile) {
     roleData['skills'] = skills
     let artisDetail = profile.getArtisMark()
     roleData['relicSet'] = artisDetail.sets
+    // 角色主要的伤害倍率属性：取 miao 圣遗物评分权重里最高的（同分时生命/防御/精通优先于攻击）
+    const weight = artisDetail.charWeight || {}
+    roleData['keyStat'] = [['hp', 'hp'], ['def', 'def'], ['mastery', 'em'], ['atk', 'atk']]
+        .reduce((best, [k, v]) => ((weight[k] || 0) > (weight[best?.[0]] || 0) ? [k, v] : best), null)?.[1] || ''
     return roleData;
 }
 

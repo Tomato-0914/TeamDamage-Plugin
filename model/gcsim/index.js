@@ -103,7 +103,8 @@ export function buildConfig (members, combo) {
 
   const lines = [
     `options iteration=1 duration=${duration} swap_delay=${SWAP_DELAY} ignore_burst_energy=true;`,
-    `target lvl=${TARGET_LEVEL} resist=${TARGET_RESIST};`
+    // 怪物判定半径 2：默认的 1 太小，玛薇卡摩托形态的重击等会判定不到目标
+    `target lvl=${TARGET_LEVEL} resist=${TARGET_RESIST} radius=2;`
   ]
   for (const m of members) {
     lines.push(`${m.key} char lvl=${m.level}/${m.maxLevel} cons=${m.cons} talent=${m.talents.join(',')};`)
@@ -173,6 +174,8 @@ const REACTION_LABEL = {
   14: '超载', 15: '超导', 16: '感电', 17: '碎冰', 18: '扩散', 19: '扩散', 20: '扩散', 21: '扩散', 22: '燃烧',
   23: '绽放', 24: '绽放', 25: '烈绽放', 26: '超绽放', 27: '月感电', 28: '月结晶', 32: '星扩散'
 }
+/** 不吃角色属性的特殊伤害（AttackTagNoneStat），按技能名翻译，归到「反应 / 其他」 */
+const ABIL_LABEL = { 'Sea-Dyed Foam': '海染泡沫' }
 const AMP_LABEL = { vaporize: '蒸发', melt: '融化' }
 const CATA_LABEL = { aggravate: '超激化', spread: '蔓激化' }
 
@@ -222,8 +225,8 @@ export function parseSample (sample, members) {
     }
     if (l.event !== 'damage') continue
     const d = l.logs
-    // 行秋雨帘剑等护盾类的 0 伤害判定不计
-    if (!d.damage) continue
+    // 行秋雨帘剑等护盾类的 0 伤害判定不计；target 0 是玩家自己（如绽放的草原核炸到自己），不计
+    if (!d.damage || d.target === 0) continue
     const calc = calcs[`${l.frame}|${l.msg}`]?.shift()
     const tag = d['attack-tag']
     const member = members[l.char_index]
@@ -241,7 +244,7 @@ export function parseSample (sample, members) {
       crit = base = exp = d.damage
     }
     let label
-    const reaction = REACTION_LABEL[tag]
+    const reaction = REACTION_LABEL[tag] || (tag === 13 ? ABIL_LABEL[d.abil] || '其他伤害' : '')
     if (reaction) {
       label = reaction
     } else {
