@@ -13,3 +13,5 @@ showAvatars: true
 mainCritFull: false
 # 全队按 100% 暴击率计算（开启时主 C 满暴不再单独生效）
 teamCritFull: false
+# 怪物等级：小助手固定按 90 级计算，设为其他等级时按防御公式估算（1~200）
+enemyLevel: 90

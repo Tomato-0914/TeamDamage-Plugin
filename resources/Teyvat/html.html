@@ -208,7 +208,7 @@
 
   {{if showDamages}}
   <div class="sec card">
-    <h3>伤害过程<small>以 90 级怪物为基准，总伤与 DPS 为 1.25 倍期望伤害</small></h3>
+    <h3>伤害过程<small>{{if data.enemyLevel}}以 {{data.enemyLevel}} 级怪物为基准（由小助手 90 级的结果按防御公式估算）{{else}}以 90 级怪物为基准{{/if}}，总伤与 DPS 为 1.25 倍期望伤害</small></h3>
     <div class="dmg">
       {{each dmgCols col}}
       <table>

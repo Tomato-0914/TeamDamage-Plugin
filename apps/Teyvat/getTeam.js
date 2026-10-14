@@ -5,7 +5,8 @@ import {Format} from '../../../miao-plugin/components/index.js'
 import {Character, Player} from '../../../miao-plugin/models/index.js'
 import getServer from './GetData/getServer.js'
 import simpleTeamDamageRes from './simpleDamage/simpleTeamDamageRes.js'
-import buildScreenView from './simpleDamage/screenView.js'
+import buildScreenView, {makeOwnerOf} from './simpleDamage/screenView.js'
+import {BASE_ENEMY_LEVEL, scaleEnemyLevel} from './simpleDamage/enemyLevel.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import {findPreset} from "../../model/teamPreset.js"
 import {getConfig} from "../../model/config.js"
@@ -245,6 +246,8 @@ export async function team(e, tokens, uid) {
   const tips = [`UID${uid}：${isData}`, `手法：[${custom ? '自定义' : '默认'}]`]
   if (cfg.teamCritFull) tips.push('计算：全队满暴')
   else if (cfg.mainCritFull) tips.push('计算：主C满暴')
+  const enemyLevel = Math.round(Number(cfg.enemyLevel)) || BASE_ENEMY_LEVEL
+  if (enemyLevel !== BASE_ENEMY_LEVEL) tips.push(`计算：怪物${enemyLevel}级（估算）`)
   if (loadoutTips.length) tips.push(`换装：${loadoutTips.join('；')}`)
   if (loadoutWarns.length) tips.push(`注意：${loadoutWarns.join('；')}`)
   // 提示信息按设置自动撤回，避免刷屏；关闭提示时仍发送换装警告
@@ -285,6 +288,11 @@ export async function team(e, tokens, uid) {
     return true
   }
   let data = await simpleTeamDamageRes(res.result, rolesData)
+  // 怪物等级：小助手固定 90 级，按防御公式换算
+  if (enemyLevel !== BASE_ENEMY_LEVEL) {
+    scaleEnemyLevel(data, enemyLevel, makeOwnerOf(Object.keys(data.avatars), viewNameOf(data)))
+    calcNotes.push(`怪物${enemyLevel}级`)
+  }
   data.custom = !!custom
   data.calcNotes = calcNotes
   // 用队伍简写计算时，标题显示简写名
@@ -310,16 +318,19 @@ function mainCarry(result, roles) {
     return best
 }
 
-function screenData(e, data, cfg = {}) {
-    const miaoRes = `${cwd}/plugins/miao-plugin/resources/`
-    // 伤害记录里旅行者写作「草主」等，要对应到结果里的「旅行者草」
+/** 结果里的角色名识别：伤害记录里旅行者写作「草主」等，要对应到结果里的「旅行者草」 */
+function viewNameOf(data) {
     const traveler = Object.keys(data.avatars).find(n => n.startsWith(TRAVELER))
-    const viewName = (name) => {
+    return (name) => {
         const std = resolveName(name)
         return std === TRAVELER ? traveler || null : std
     }
+}
+
+function screenData(e, data, cfg = {}) {
+    const miaoRes = `${cwd}/plugins/miao-plugin/resources/`
     return {
-        ...buildScreenView(data, viewName, miaoRes, fs.existsSync),
+        ...buildScreenView(data, viewNameOf(data), miaoRes, fs.existsSync),
         data,
         showDamages: cfg.showDamages !== false,
         showAvatars: cfg.showAvatars !== false,

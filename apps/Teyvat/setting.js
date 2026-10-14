@@ -13,13 +13,13 @@ export const SETTING_ITEMS = [
   { key: 'mainCritFull', name: '主C满暴', desc: '输出占比最高的角色按 100% 暴击计算', type: 'bool' },
   { key: 'teamCritFull', name: '全队满暴', desc: '全队按 100% 暴击计算', type: 'bool' },
   { key: 'sendTips', name: '提示信息', desc: '计算前发送 UID、队伍、手法等提示', type: 'bool' },
-  { key: 'tipsRecall', name: '提示撤回', desc: '提示信息自动撤回的秒数，0 为不撤回', type: 'int', min: 0, max: 120, unit: '秒' }
+  { key: 'tipsRecall', name: '提示撤回', desc: '提示信息自动撤回的秒数，0 为不撤回', type: 'int', min: 0, max: 120, unit: '秒', example: 5 },
+  { key: 'enemyLevel', name: '怪物等级', desc: '小助手按 90 级计算，其他等级按防御公式估算', type: 'int', min: 1, max: 200, unit: '级', example: 100 }
 ]
 
 /** 提瓦特小助手接口固定、无法修改的计算参数，只做展示 */
 export const FIXED_ITEMS = [
   { name: '开局满能量', desc: '小助手接口不支持设置', value: '—' },
-  { name: '怪物等级', desc: '小助手以 90 级怪物为基准', value: '90' },
   { name: '怪物抗性', desc: '小助手固定的基础元素抗性', value: '10%' },
   { name: '目标类型', desc: '仅对单体', value: '单体' }
 ]
@@ -88,7 +88,7 @@ export async function changeSetting (e, name, rawValue) {
   } else {
     next = Number(value)
     if (!/^\d+$/.test(value) || next < item.min || next > item.max) {
-      await e.reply(`${item.name}需为 ${item.min}~${item.max} 的整数，例如：#队伍伤害设置${item.name} 5`, true)
+      await e.reply(`${item.name}需为 ${item.min}~${item.max} 的整数，例如：#队伍伤害设置${item.name} ${item.example ?? item.min}`, true)
       return true
     }
   }

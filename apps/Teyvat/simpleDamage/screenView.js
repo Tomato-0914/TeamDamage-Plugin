@@ -23,6 +23,29 @@ function textOn (color) {
 }
 
 /**
+ * 伤害记录里的动作名带角色简称（雷神E协同、万叶Q后续），取能识别为队员的最长前缀作为归属；反应等无归属返回空字符串
+ * @param {string[]} teamNames 队员名
+ * @param {(name: string) => string|null} resolveName 角色名/别名 → 标准名
+ * @returns {(action: string) => string}
+ */
+export function makeOwnerOf (teamNames, resolveName) {
+  const cache = {}
+  return (action) => {
+    if (action in cache) return cache[action]
+    let owner = ''
+    for (let i = Math.min(action.length - 1, 6); i >= 1; i--) {
+      const name = resolveName(action.slice(0, i))
+      if (name && teamNames.includes(name)) {
+        owner = name
+        break
+      }
+    }
+    cache[action] = owner
+    return owner
+  }
+}
+
+/**
  * @param {Object} data simpleTeamDamageRes 的返回值
  * @param {(name: string) => string|null} resolveName 角色名/别名 → 标准名
  * @param {string} miaoRes miao-plugin 资源目录（以 / 结尾）
@@ -38,21 +61,7 @@ export default function buildScreenView (data, resolveName, miaoRes, exists) {
   pie.forEach((d, i) => { colors[d.char] = data.pie_color2[i] })
   const share = pie.map((d, i) => ({ ...d, pct: Math.round(d.damage / pieTotal * 1000) / 10, color: data.pie_color2[i], text: textOn(data.pie_color2[i]) }))
 
-  // 伤害记录里的动作名带角色简称（雷神E协同、万叶Q后续），取能识别为队员的最长前缀
-  const ownerCache = {}
-  const ownerOf = (action) => {
-    if (action in ownerCache) return ownerCache[action]
-    let owner = ''
-    for (let i = Math.min(action.length - 1, 6); i >= 1; i--) {
-      const name = resolveName(action.slice(0, i))
-      if (name && teamNames.includes(name)) {
-        owner = name
-        break
-      }
-    }
-    ownerCache[action] = owner
-    return owner
-  }
+  const ownerOf = makeOwnerOf(teamNames, resolveName)
   const colorOf = (action) => colors[ownerOf(action)] || OTHER_COLOR
 
   const damages = data.damages || []

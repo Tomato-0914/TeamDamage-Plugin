@@ -46,6 +46,14 @@ export default [
     helpMessage: '全队按 100% 暴击计算',
     bottomHelpMessage: '开启时主C满暴不再单独生效',
     component: 'Switch'
+  },
+  {
+    field: 'settings.enemyLevel',
+    label: '怪物等级',
+    helpMessage: '提瓦特小助手固定按 90 级怪物计算，设为其他等级时按防御公式估算',
+    bottomHelpMessage: '1~200，默认 90（不换算）；有减防效果的队伍会有少量误差',
+    component: 'InputNumber',
+    componentProps: { min: 1, max: 200, addonAfter: '级' }
   }
 ]
 
@@ -55,7 +63,7 @@ const SWITCHES = ['sendTips', 'showDamages', 'showAvatars', 'mainCritFull', 'tea
 /** 读取 */
 export function getData () {
   const cfg = getConfig()
-  const data = { tipsRecall: Number(cfg.tipsRecall) || 0 }
+  const data = { tipsRecall: Number(cfg.tipsRecall) || 0, enemyLevel: Number(cfg.enemyLevel) || 90 }
   // 默认开启的项缺省视为开启，默认关闭的项缺省视为关闭
   for (const k of SWITCHES) data[k] = ['mainCritFull', 'teamCritFull'].includes(k) ? cfg[k] === true : cfg[k] !== false
   return data
@@ -66,7 +74,9 @@ export function setData (data) {
   const cur = getConfig()
   const recall = Math.round(Number(data?.tipsRecall ?? cur.tipsRecall))
   if (!Number.isFinite(recall) || recall < 0 || recall > 120) throw new Error('提示撤回时间需在 0~120 秒之间')
-  const next = { ...cur, tipsRecall: recall }
+  const enemyLevel = Math.round(Number(data?.enemyLevel ?? cur.enemyLevel ?? 90))
+  if (!Number.isFinite(enemyLevel) || enemyLevel < 1 || enemyLevel > 200) throw new Error('怪物等级需在 1~200 之间')
+  const next = { ...cur, tipsRecall: recall, enemyLevel }
   for (const k of SWITCHES) next[k] = data?.[k] ?? cur[k]
   setConfig(next)
 }
