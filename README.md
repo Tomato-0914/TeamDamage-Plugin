@@ -147,7 +147,7 @@ git clone --depth=1 https://github.com/Tomato-0914/TeamDamage-Plugin.git ./plugi
 
 ### 安装 GCSim
 
-需要自行准备 GCSim 命令行程序，放到插件目录的 `bin/gcsim`（Windows 为 `bin/gcsim.exe`），或在 `config.yaml` 里用 `gcsimPath` 指定路径。用 Go（1.22+）从源码编译：
+需要自行准备 GCSim 命令行程序，放到插件目录的 `bin/gcsim`（Windows 为 `bin/gcsim.exe`），或在 `config.yaml` 里用 `gcsimPath` 指定路径。用 Go 1.27 及以上从源码编译（系统源里的 golang 版本通常太旧，请从 [golang.google.cn/dl](https://golang.google.cn/dl/) 下载官方安装包；国内服务器先执行 `go env -w GOPROXY=https://goproxy.cn,direct`）：
 
 ```bash
 git clone --depth=1 https://github.com/genshinsim/gcsim.git
