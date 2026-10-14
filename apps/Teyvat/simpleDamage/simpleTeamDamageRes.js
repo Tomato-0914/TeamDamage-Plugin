@@ -134,7 +134,7 @@ async function simpleTeamDamageRes (raw, rolesData) {
   }
 }
 
-export function getFace (role) {
+function getFace (role) {
   let miaoPath = `${miaoRes}/character/${role}/imgs/`
   return fs.existsSync(`${miaoPath}face-q.webp`) ? `${miaoPath}face-q.webp` : `${miaoPath}face.webp`
 }

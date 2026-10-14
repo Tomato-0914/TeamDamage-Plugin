@@ -5,7 +5,6 @@ import {Format} from '../../../miao-plugin/components/index.js'
 import {Character, Player} from '../../../miao-plugin/models/index.js'
 import getServer from './GetData/getServer.js'
 import simpleTeamDamageRes from './simpleDamage/simpleTeamDamageRes.js'
-import gcsimTeamDamageRes from './simpleDamage/gcsimTeamDamageRes.js'
 import buildScreenView from './simpleDamage/screenView.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import {findPreset} from "../../model/teamPreset.js"
@@ -13,8 +12,6 @@ import {getConfig} from "../../model/config.js"
 import {pluginRoot, pluginName} from "../../model/path.js"
 import {COMBO_USAGE, inferTeam, parseCombo, splitTeamAndCombo, splitTokens} from "./combo.js"
 import {LOADOUT_USAGE, applyLoadout, parseMember} from "../../model/loadout.js"
-import {buildConfig, gcsimBin, parseSample, runGcsim} from "../../model/gcsim/index.js"
-import {toGcsimMember} from "../../model/gcsim/member.js"
 
 let cwd = process.cwd().replace(/\\/g, '/')
 /** 小助手请求头 */
@@ -96,10 +93,8 @@ function travelerElem(name, char) {
  * @param e 消息事件
  * @param {string[]} tokens 队伍成员（或队伍简写），后面可接自定义手法
  * @param uid 查询 uid
- * @param {'teyvat'|'gcsim'} engine 计算引擎：提瓦特小助手 / 本地 GCSim（测试版）
  */
-export async function team(e, tokens, uid, engine = 'teyvat') {
-  const gcsim = engine === 'gcsim'
+export async function team(e, tokens, uid) {
   let {teamTokens: teamlist, comboTokens, loadoutTokens} = splitTeamAndCombo(tokens, resolveName)
   let inferred = false
   // 使用了带手法的队伍预设、且指令里没写手法时，记下预设名用于报错提示
@@ -186,19 +181,12 @@ export async function team(e, tokens, uid, engine = 'teyvat') {
       return true
     }
   }
-  // GCSim 没有默认手法
-  if (gcsim && !custom) {
-    await e.reply(`#队伍模拟 需要写手法（或使用带手法的队伍预设），例如：\n#队伍模拟钟离，夜兰，行秋，胡桃 钟离长e，夜兰qe，行秋qe，胡桃e azk*3 q`, true)
-    return true
-  }
 
   let rolesData = {}
   let role_data = []
   let NoDataName = []
   let loadoutTips = []
   let loadoutWarns = []
-  // GCSim 的队员数据，顺序与 role_data 一致
-  let gcsimMembers = []
   let player = Player.create(uid)
   // role_data 的顺序即手法里的角色序号，必须按队伍顺序依次处理
   for (const v of teamarId) {
@@ -226,7 +214,7 @@ export async function team(e, tokens, uid, engine = 'teyvat') {
         await e.reply(`面板里的旅行者是${attrsKeys[profile.elem]}元素，想算${want}主的话，请在游戏里切换到${want}元素后 #更新面板\n也可以写「旅行者换${want}」，用当前面板估算`, true)
         return true
       }
-      if (elem === 'cryo' && !gcsim) {
+      if (elem === 'cryo') {
         await e.reply('提瓦特小助手暂不支持冰主的伤害计算', true)
         return true
       }
@@ -235,14 +223,6 @@ export async function team(e, tokens, uid, engine = 'teyvat') {
     teyvatData.role = teyvatName
     rolesData[teyvatName] = panel
     role_data.push(teyvatData)
-    if (gcsim) {
-      const {member, error} = toGcsimMember(profile, teyvatData, panel, loadoutElem || profile.elem)
-      if (error) {
-        await e.reply(error, true)
-        return true
-      }
-      gcsimMembers.push({...member, name: teyvatName, elem: loadoutElem || profile.elem})
-    }
   }
 
   if (NoDataName.length > 0) {
@@ -263,7 +243,6 @@ export async function team(e, tokens, uid, engine = 'teyvat') {
   }
   // 具体手法会画在结果图里，这里只标注用的是自定义还是默认手法
   const tips = [`UID${uid}：${isData}`, `手法：[${custom ? '自定义' : '默认'}]`]
-  if (gcsim) tips.push('计算：GCSim 本地模拟（测试版）')
   if (cfg.teamCritFull) tips.push('计算：全队满暴')
   else if (cfg.mainCritFull) tips.push('计算：主C满暴')
   if (loadoutTips.length) tips.push(`换装：${loadoutTips.join('；')}`)
@@ -272,8 +251,6 @@ export async function team(e, tokens, uid, engine = 'teyvat') {
   if (cfg.sendTips !== false || loadoutWarns.length) {
     await e.reply(tips.join('\n'), false, { recallMsg: Math.min(120, Math.max(0, Number(cfg.tipsRecall) || 0)) })
   }
-  if (gcsim) return gcsimTeam(e, {uid, cfg, custom, rolesData, gcsimMembers, calcNotes, preset})
-
   logger.info(logger.cyan(`[${pluginName}]队伍伤害[请求UID:${uid}]>>>${isData}${custom ? ` 手法:${JSON.stringify(custom.combo)}` : ''}${loadoutTips.length ? ` 换装:${loadoutTips.join('；')}` : ''}`))
 
   let TiwateBody = {uid, role_data, server: getServer(uid, true)}
@@ -314,37 +291,6 @@ export async function team(e, tokens, uid, engine = 'teyvat') {
   data.presetName = preset?.name || ''
   let ScreenData = screenData(e, data, cfg)
   let img = await puppeteer.screenshot('TeamDamage', ScreenData)
-  await e.reply(img)
-  return true
-}
-
-/** 用本地 GCSim 计算并出图 */
-async function gcsimTeam(e, {uid, cfg, custom, rolesData, gcsimMembers, calcNotes, preset}) {
-  const names = gcsimMembers.map(m => m.name)
-  const config = buildConfig(gcsimMembers, custom.combo)
-  logger.info(logger.cyan(`[${pluginName}]队伍模拟[UID:${uid}]>>>${names.join('|')} 手法:${JSON.stringify(custom.combo)}`))
-  logger.debug(`[${pluginName}] GCSim 配置：\n${config}`)
-  const res = await runGcsim(config, gcsimBin(cfg.gcsimPath), Object.fromEntries(gcsimMembers.map(m => [m.key, m.name])))
-  if (!res.ok) {
-    logger.error(`[${pluginName}] GCSim：${res.msg}`)
-    await e.reply(res.missing ? `${res.msg}\n请先安装 GCSim，见插件 README 的「GCSim 本地计算」` : res.msg, true)
-    return true
-  }
-  let parsed = parseSample(res.sample, gcsimMembers.map(m => ({...m, critFull: !!cfg.teamCritFull})))
-  // 主 C 满暴：GCSim 日志里有每一击的暴击伤害，不用重新模拟，直接按必暴击重算主 C 的期望
-  if (cfg.mainCritFull && !cfg.teamCritFull) {
-    const main = parsed.pie_data2.find(p => names.includes(p.char))?.char
-    if (main) {
-      parsed = parseSample(res.sample, gcsimMembers.map(m => ({...m, critFull: m.name === main})))
-      if (rolesData[main]) rolesData[main].fightProp['暴击率'] = 100
-      calcNotes.push(`主C满暴·${main}`)
-    }
-  }
-  let data = gcsimTeamDamageRes(parsed, rolesData, names, uid, custom.labels)
-  data.custom = true
-  data.calcNotes = calcNotes
-  data.presetName = preset?.name || ''
-  let img = await puppeteer.screenshot('TeamDamage', screenData(e, data, cfg))
   await e.reply(img)
   return true
 }
@@ -543,10 +489,6 @@ async function covProfileroleData(profile) {
     roleData['skills'] = skills
     let artisDetail = profile.getArtisMark()
     roleData['relicSet'] = artisDetail.sets
-    // 角色主要的伤害倍率属性：取 miao 圣遗物评分权重里最高的（同分时生命/防御/精通优先于攻击）
-    const weight = artisDetail.charWeight || {}
-    roleData['keyStat'] = [['hp', 'hp'], ['def', 'def'], ['mastery', 'em'], ['atk', 'atk']]
-        .reduce((best, [k, v]) => ((weight[k] || 0) > (weight[best?.[0]] || 0) ? [k, v] : best), null)?.[1] || ''
     return roleData;
 }
 

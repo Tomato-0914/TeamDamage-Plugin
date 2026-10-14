@@ -13,5 +13,3 @@ showAvatars: true
 mainCritFull: false
 # 全队按 100% 暴击率计算（开启时主 C 满暴不再单独生效）
 teamCritFull: false
-# GCSim 可执行文件路径（#队伍模拟 使用），留空为插件目录下的 bin/gcsim（Windows 为 bin/gcsim.exe）
-gcsimPath: ''
