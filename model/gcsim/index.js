@@ -202,11 +202,16 @@ export function parseSample (sample, members) {
   }
   if (!end) end = Math.max(0, ...logs.map(l => l.frame))
 
+  // 每一击的 calc 事件（暴击 / 不暴击 / 期望伤害）和 damage 事件同帧同名，但中间可能隔着很多 buff 事件，按出现顺序配对
+  const calcs = {}
+  for (const l of logs) {
+    if (l.event === 'calc') (calcs[`${l.frame}|${l.msg}`] ||= []).push(l.logs)
+  }
+
   const hits = []
   const energy = members.map(() => null)
   const scale = members.map(() => ({}))
-  for (let i = 0; i < logs.length; i++) {
-    const l = logs[i]
+  for (const l of logs) {
     if (l.frame > end) break
     if (l.event === 'energy') {
       const v = l.logs.post_drain ?? l.logs.post_recovery
@@ -217,14 +222,7 @@ export function parseSample (sample, members) {
     const d = l.logs
     // 行秋雨帘剑等护盾类的 0 伤害判定不计
     if (!d.damage) continue
-    // 紧随其后的 calc 事件带有暴击 / 不暴击 / 期望伤害
-    let calc = null
-    for (let j = i + 1; j < Math.min(logs.length, i + 8); j++) {
-      if (logs[j].event === 'calc' && logs[j].frame === l.frame && logs[j].msg === l.msg) {
-        calc = logs[j].logs
-        break
-      }
-    }
+    const calc = calcs[`${l.frame}|${l.msg}`]?.shift()
     const tag = d['attack-tag']
     const member = members[l.char_index]
     let crit, base, exp
@@ -245,7 +243,10 @@ export function parseSample (sample, members) {
     if (reaction) {
       label = reaction
     } else {
-      label = `${member?.name || ''}${TAG_LABEL[tag] || d.abil}${AMP_LABEL[d.amp] || ''}${CATA_LABEL[d.cata] || ''}`
+      // 没有归类的伤害（如阿蕾奇诺 2 命的额外伤害）：命座效果写作「N命额外伤害」，其余为「额外伤害」
+      const cons = String(d.abil).match(/\(C(\d)\)/)
+      const kind = TAG_LABEL[tag] || (cons ? `${cons[1]}命额外伤害` : '额外伤害')
+      label = `${member?.name || ''}${kind}${AMP_LABEL[d.amp] || ''}${CATA_LABEL[d.cata] || ''}`
     }
     hits.push({ frame: l.frame, label, crit, base, exp, owner: reaction ? reaction : member?.name || '' })
   }
