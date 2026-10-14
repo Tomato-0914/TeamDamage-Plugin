@@ -63,6 +63,6 @@ export default function gcsimTeamDamageRes (parsed, rolesData, names, uid, actio
     damages: parsed.damages,
     buffs: [],
     source: 'GCSim',
-    dmgNote: '以 90 级怪物、10% 抗性为基准，GCSim 单次模拟的期望伤害'
+    dmgNote: '以 90 级怪物、10% 抗性为基准，GCSim 单次模拟，总伤与 DPS 为 1.25 倍期望伤害'
   }
 }

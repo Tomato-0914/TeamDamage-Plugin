@@ -3,7 +3,7 @@
  *
  * 流程：队员数据 → GCSim 配置脚本 → 调用 gcsim 可执行文件生成单次模拟的 sample 日志 → 换算成和小助手结果相同的结构出图
  * - gcsim 没有默认手法，必须写手法（或用带手法的队伍预设）
- * - 只跑一次模拟（-sample），伤害按每一击的期望值（暴击率 × 暴伤）累加，和小助手的口径一致；
+ * - 只跑一次模拟（-sample），伤害按每一击的期望值（暴击率 × 暴伤）累加，总伤与 DPS 和小助手一样取 1.25 倍；
  *   暴击率超过 100% 时 gcsim 日志里的期望值会偏高，这里按封顶 100% 重新算
  * - 开局满能量，大招不检查能量（ignore_burst_energy），避免手法因能量不足卡住；结束时的剩余能量照常统计
  * 本文件不依赖 Yunzai / miao，队员数据由 member.js 从面板换算
@@ -38,6 +38,8 @@ const SWAP_DELAY = 12
 /** 手法结束后继续统计的帧数，让最后一个动作的伤害落地 */
 const TAIL_FRAMES = 90
 const MAX_DURATION = 120
+/** 总伤与 DPS 按期望伤害的 1.25 倍显示，与提瓦特小助手的口径一致；伤害过程里的每一击仍是期望伤害 */
+export const TOTAL_SCALE = 1.25
 
 /** gcsim 可执行文件：设置里的 gcsimPath，否则为插件目录下的 bin/gcsim */
 export function gcsimBin (custom = '') {
@@ -251,7 +253,7 @@ export function parseSample (sample, members) {
     hits.push({ frame: l.frame, label, crit, base, exp, owner: reaction ? reaction : member?.name || '' })
   }
 
-  const total = hits.reduce((p, h) => p + h.exp, 0)
+  const total = hits.reduce((p, h) => p + h.exp, 0) * TOTAL_SCALE
   const lastHit = hits.length ? hits[hits.length - 1].frame : end
   const tm = Math.max(0.1, Math.round(Math.max(lastHit, 60) / 6) / 10)
 
