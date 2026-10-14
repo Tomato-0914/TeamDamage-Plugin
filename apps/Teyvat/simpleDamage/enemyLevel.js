@@ -3,7 +3,7 @@
  *
  * 防御区 = (角色等级 + 100) / (角色等级 + 100 + 怪物等级 + 100)，与 miao-plugin DmgCalc 相同（不考虑减防）
  * - 角色造成的伤害按「新等级防御区 / 90 级防御区」缩放，角色等级取各自面板
- * - 绽放、超载等剧变反应和月反应不吃防御，伤害记录里没有角色前缀的项保持不变
+ * - 绽放、超载等剧变反应和月反应不吃防御，保持不变；没有角色前缀的其他伤害（血偿勒令、海染泡沫等）按 90 级角色换算
  * - 减防、无视防御（雷神 2 命、纳西妲 2 命等）的效果小助手已算进结果但这里拿不到，换算会有少量误差，结果图标注为估算
  * 不依赖 Yunzai / miao，方便单独测试
  */
@@ -13,6 +13,9 @@ export const BASE_ENEMY_LEVEL = 90
 
 const toNum = (v) => Number(String(v ?? '').replace(/,/g, ''))
 
+/** 不吃防御的剧变反应、月反应（伤害记录里没有角色前缀，如「原绽放反应伤害」「超载」） */
+const REACTION = /绽放|超载|感电|超导|扩散|碎冰|燃烧|月感电|月结晶|反应伤害/
+
 /** 防御区系数 */
 const defMult = (charLv, enemyLv) => (charLv + 100) / (charLv + 100 + enemyLv + 100)
 
@@ -21,7 +24,7 @@ function scaleTotal (total, ratio) {
   const m = String(total ?? '').match(/^([\d.]+)(.*)$/)
   if (!m) return total
   const v = Number(m[1]) * ratio
-  return `${v >= 100 ? Math.round(v) : Math.round(v * 10) / 10}${m[2]}`
+  return `${Math.round(v * 10) / 10}${m[2]}`
 }
 
 /**
@@ -34,7 +37,8 @@ function scaleTotal (total, ratio) {
 export function scaleEnemyLevel (data, enemyLv, ownerOf) {
   if (!enemyLv || enemyLv === BASE_ENEMY_LEVEL) return data
   const levels = Object.fromEntries(Object.values(data.avatars || {}).map(a => [a.name, toNum(a.level) || 90]))
-  const ratioOf = (name) => (name in levels ? defMult(levels[name], enemyLv) / defMult(levels[name], BASE_ENEMY_LEVEL) : 1)
+  const ratioByLevel = (lv) => defMult(lv, enemyLv) / defMult(lv, BASE_ENEMY_LEVEL)
+  const ratioOf = (name) => (name in levels ? ratioByLevel(levels[name]) : 1)
   const scale = (v, r) => (Number.isFinite(toNum(v)) && String(v).trim() !== '' ? String(Math.round(toNum(v) * r)) : v)
 
   // 逐条换算伤害记录，同时统计换算前后的期望伤害，用来换算总伤和输出占比
@@ -43,7 +47,7 @@ export function scaleEnemyLevel (data, enemyLv, ownerOf) {
   const byChar = {}
   data.damages = (data.damages || []).map(d => {
     const owner = ownerOf(d[1])
-    const r = owner ? ratioOf(owner) : 1
+    const r = owner ? ratioOf(owner) : REACTION.test(d[1]) ? 1 : ratioByLevel(90)
     const exp = toNum(d[4]) || 0
     before += exp
     after += exp * r
