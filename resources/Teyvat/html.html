@@ -38,6 +38,8 @@
   .head .big.long .num { font-size: 84px; }
   .head .big.long .num small { font-size: 50px; }
   .head .big .u { font-size: 20px; color: #fff; padding: 6px 14px; border-radius: 18px; background: var(--accent); box-shadow: 0 4px 12px rgba(var(--accent-rgb),0.4); white-space: nowrap; align-self: center; }
+  /* 满暴等计算设置的提示，与「输出总伤」标签并排 */
+  .head .big .u.note { color: var(--accent); background: rgba(255,255,255,0.75); border: 1px solid rgba(var(--accent-rgb),0.5); box-shadow: none; margin-left: -6px; }
   /* 伤害评级横幅：评级色块 + 全服排名进度条，配色按档位 ACE 红金 / S 金 / A 紫 / B 蓝 / 其他灰 */
   .t-ace { --r1: #ff3d6e; --r2: #ffb13b; --rg: 255,77,90;  --rt: #d92f4b; }
   .t-s   { --r1: #ffcf3f; --r2: #ff7a1a; --rg: 255,150,40; --rt: #c96a08; }
@@ -145,7 +147,7 @@
       <div class="title">队伍伤害</div>
       <div class="team" style="font-size: {{teamLineSize}}px">{{teamLine}}</div>
       {{/if}}
-      <div class="big{{totalLong ? ' long' : ''}}"><span class="num">{{totalNum}}<small>{{totalUnit}}</small></span><span class="u">输出总伤</span></div>
+      <div class="big{{totalLong ? ' long' : ''}}"><span class="num">{{totalNum}}<small>{{totalUnit}}</small></span><span class="u">输出总伤</span>{{each data.calcNotes n}}<span class="u note">{{n}}</span>{{/each}}</div>
     </div>
   </div>
 
@@ -167,6 +169,7 @@
     {{if maxHit}}<div class="kpi card"><div class="v">{{maxHit.crit}}</div><div class="k">最高一击 · {{maxHit.action}}</div></div>{{/if}}
   </div>
 
+  {{if showAvatars}}
   <div class="sec card">
     <h3>队伍与输出占比</h3>
     <div class="stack">{{each share s}}<div style="width:{{s.pct}}%;background:{{s.color}};color:{{s.text}}">{{if s.pct >= 18}}{{s.char}} {{s.pct}}%{{else if s.pct >= 7}}{{s.pct}}%{{/if}}</div>{{/each}}</div>
@@ -189,6 +192,7 @@
       {{/each}}
     </div>
   </div>
+  {{/if}}
 
   <div class="sec card">
     <h3>伤害时间分布<small>每秒期望伤害，按角色堆叠</small></h3>
@@ -202,6 +206,7 @@
     <div class="chips">{{each data.actions a}}<span class="{{a=='跳跃'||a=='冲刺'||a.indexOf('等待')==0 ? 'k' : ''}}">{{a}}</span>{{/each}}</div>
   </div>
 
+  {{if showDamages}}
   <div class="sec card">
     <h3>伤害过程<small>以 90 级怪物为基准，总伤与 DPS 为 1.25 倍期望伤害</small></h3>
     <div class="dmg">
@@ -213,6 +218,7 @@
       {{/each}}
     </div>
   </div>
+  {{/if}}
 
   <div class="sec card buffs">
     <h3>Buff 情况</h3>

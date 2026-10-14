@@ -6,6 +6,7 @@ import { splitTokens } from './combo.js'
 import MysApi from './GetATUID.js'
 import helpData from './helpData.js'
 import { presetList } from './presetList.js'
+import { FIXED_ITEMS, SETTING_ITEMS, changeSetting, showSettings } from './setting.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import { pluginName, pluginRoot } from '../../model/path.js'
 
@@ -36,6 +37,11 @@ export class BotEntry extends plugin {
           fnc: 'presetList'
         },
         {
+          // 同样要放在计算指令前面，否则「设置」会被当成队伍名
+          reg: /^#队伍伤害设置\s*(.*)$/,
+          fnc: 'setting'
+        },
+        {
           reg: /^#队伍伤害(?:详情|过程|全图)?(\d{9,10})?(.*)$/,
           fnc: 'TeyvatEnTry'
         }
@@ -55,6 +61,23 @@ export class BotEntry extends plugin {
     })
     await e.reply(img)
     return true
+  }
+
+  /** #队伍伤害设置：不带参数时查看，带「设置名 值」时修改 */
+  async setting (e) {
+    const rest = e.msg.replace(/^#队伍伤害设置\s*/, '').trim()
+    if (!rest) return showSettings(e)
+    const item = SETTING_ITEMS.find(i => rest.replace(/c/g, 'C').startsWith(i.name))
+    const fixed = FIXED_ITEMS.find(i => rest.startsWith(i.name))
+    if (!item && fixed) {
+      await e.reply(`「${fixed.name}」是提瓦特小助手接口固定的参数（${fixed.desc}），暂时不能修改`, true)
+      return true
+    }
+    if (!item) {
+      await e.reply(`没有「${rest}」这个设置项，可设置：${SETTING_ITEMS.map(i => i.name).join('、')}\n发送 #队伍伤害设置 查看当前设置`, true)
+      return true
+    }
+    return changeSetting(e, item.name, rest.slice(item.name.length))
   }
 
   async presetList (e) {

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "PanelFont"; src: url({{pluResPath}}../fonts/HYWH-65W.ttf); }
+  @font-face { font-family: "NumFont"; src: url({{pluResPath}}../fonts/tttgbnumber.ttf); }
+  body { margin: 0; }
+  #container { width: 720px; padding: 26px 24px 20px; box-sizing: border-box; font-family: "PanelFont", sans-serif; color: #26242d;
+    background: linear-gradient(160deg, #f6f1ff 0%, #eef2fb 50%, #f7efe9 100%); }
+  .head { position: relative; overflow: hidden; padding: 24px 26px 22px; border-radius: 20px; color: #fff;
+    background: linear-gradient(120deg, #5b6fd8 0%, #8a6fd8 55%, #c27fc0 100%); box-shadow: 0 10px 28px rgba(110, 90, 200, 0.3); }
+  .head::after { content: ""; position: absolute; right: -40px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,0.12); }
+  .head .t { font-size: 34px; font-weight: 700; letter-spacing: 1px; }
+  .head .s { font-size: 17px; margin-top: 6px; opacity: 0.9; }
+  .notice { margin-top: 14px; padding: 10px 16px; border-radius: 12px; font-size: 17px; color: #2f8f4e; background: rgba(76, 190, 110, 0.14); border: 1px solid rgba(76, 190, 110, 0.35); }
+  .card { margin-top: 16px; padding: 6px 22px 10px; border-radius: 18px; background: rgba(255,255,255,0.82); box-shadow: 0 6px 22px rgba(60, 50, 110, 0.08); }
+  .card h3 { margin: 14px 0 6px; font-size: 21px; display: flex; align-items: baseline; gap: 10px; }
+  .card h3 small { font-size: 15px; font-weight: 400; color: #8a8592; }
+  .row { display: flex; align-items: center; padding: 14px 0; border-top: 1px dashed rgba(0,0,0,0.08); }
+  .row:first-of-type { border-top: none; }
+  .row .name { flex: 0 0 190px; }
+  .row .name b { display: block; font-size: 21px; font-weight: 700; }
+  .row .name span { display: block; font-size: 14px; color: #8a8592; margin-top: 4px; }
+  .row .val { flex: 0 0 104px; height: 34px; margin-right: 18px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; }
+  .val.on { color: #2f8f4e; background: #dff3e5; }
+  .val.off { color: #c0504d; background: #fbe3e2; }
+  .val.num { color: #3b4a6b; background: #e7ecf5; font-family: "NumFont"; font-weight: 400; }
+  .val.fixed { color: #6b7380; background: #eef0f4; font-family: "NumFont"; font-weight: 400; }
+  .row .cmd { flex: 1; font-size: 16px; color: #6a6575; }
+  .row.dim .name b { color: #9a96a3; }
+  .row.dim .cmd { color: #aaa6b2; }
+  .foot { margin-top: 14px; text-align: center; font-size: 14px; color: #9a96a3; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div class="head">
+    <div class="t">队伍伤害设置</div>
+    <div class="s">伤害计算与结果图配置 · 修改需主人权限，即时生效</div>
+  </div>
+  {{if notice}}<div class="notice">{{notice}}</div>{{/if}}
+
+  <div class="card">
+    <h3>配置项<small>共 {{total}} 项</small></h3>
+    {{each rows r}}
+    <div class="row">
+      <div class="name"><b>{{r.name}}</b><span>{{r.desc}}</span></div>
+      <div class="val {{r.state}}">{{r.value}}</div>
+      <div class="cmd">{{r.cmd}}</div>
+    </div>
+    {{/each}}
+  </div>
+
+  <div class="card">
+    <h3>固定参数<small>提瓦特小助手接口不支持修改</small></h3>
+    {{each fixed f}}
+    <div class="row dim">
+      <div class="name"><b>{{f.name}}</b><span>{{f.desc}}</span></div>
+      <div class="val fixed">{{f.value}}</div>
+      <div class="cmd">不可修改</div>
+    </div>
+    {{/each}}
+  </div>
+
+  <div class="foot">{{pluginName}} v{{version}} × 计算来自提瓦特小助手</div>
+</div>
+</body>
+</html>

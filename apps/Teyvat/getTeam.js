@@ -230,12 +230,24 @@ export async function team(e, tokens, uid) {
     return true
   }
   let isData = role_data.map(v => v.role).join('|')
+  const cfg = getConfig()
+  // 满暴设置：小助手直接采用传入的暴击率
+  const calcNotes = []
+  const setCritFull = (item) => {
+    item.crit = '100.0%'
+    if (rolesData[item.role]) rolesData[item.role].fightProp['暴击率'] = 100
+  }
+  if (cfg.teamCritFull) {
+    role_data.forEach(setCritFull)
+    calcNotes.push('全队满暴')
+  }
   // 具体手法会画在结果图里，这里只标注用的是自定义还是默认手法
   const tips = [`UID${uid}：${isData}`, `手法：[${custom ? '自定义' : '默认'}]`]
+  if (cfg.teamCritFull) tips.push('计算：全队满暴')
+  else if (cfg.mainCritFull) tips.push('计算：主C满暴')
   if (loadoutTips.length) tips.push(`换装：${loadoutTips.join('；')}`)
   if (loadoutWarns.length) tips.push(`注意：${loadoutWarns.join('；')}`)
   // 提示信息按设置自动撤回，避免刷屏；关闭提示时仍发送换装警告
-  const cfg = getConfig()
   if (cfg.sendTips !== false || loadoutWarns.length) {
     await e.reply(tips.join('\n'), false, { recallMsg: Math.min(120, Math.max(0, Number(cfg.tipsRecall) || 0)) })
   }
@@ -244,7 +256,26 @@ export async function team(e, tokens, uid) {
   let TiwateBody = {uid, role_data, server: getServer(uid, true)}
   if (custom) TiwateBody.custom_combo = custom.combo
 
-  const res = await getTeyvatData(TiwateBody)
+  let res = await getTeyvatData(TiwateBody)
+  // 主 C 满暴：主 C 要算过一次才知道（输出占比最高的队员），把他改成满暴后再算一次
+  if (res.ok && cfg.mainCritFull && !cfg.teamCritFull) {
+    const main = mainCarry(res.result, role_data.map(v => v.role))
+    const item = role_data.find(v => v.role === main)
+    if (item) {
+      const backup = { crit: item.crit, cp: rolesData[main]?.fightProp['暴击率'] }
+      setCritFull(item)
+      const res2 = await getTeyvatData(TiwateBody)
+      if (res2.ok) {
+        res = res2
+        calcNotes.push(`主C满暴·${main}`)
+      } else {
+        // 第二次失败时退回原面板的结果
+        item.crit = backup.crit
+        if (rolesData[main]) rolesData[main].fightProp['暴击率'] = backup.cp
+        logger.warn(`[${pluginName}] 主C满暴重算失败，使用原面板结果：${res2.msg}`)
+      }
+    }
+  }
   if (!res.ok) {
     logger.error(`>>>[错误信息] ${res.msg}`)
     let msg = res.msg
@@ -255,15 +286,31 @@ export async function team(e, tokens, uid) {
   }
   let data = await simpleTeamDamageRes(res.result, rolesData)
   data.custom = !!custom
+  data.calcNotes = calcNotes
   // 用队伍简写计算时，标题显示简写名
   data.presetName = preset?.name || ''
-  let ScreenData = screenData(e, data)
+  let ScreenData = screenData(e, data, cfg)
   let img = await puppeteer.screenshot('TeamDamage', ScreenData)
   await e.reply(img)
   return true
 }
 
-function screenData(e, data) {
+/** 主 C：小助手结果里输出最高的队员（跳过绽放等非角色来源） */
+function mainCarry(result, roles) {
+    let best = ''
+    let bestDmg = -1
+    for (const item of result.chart_data || []) {
+        const [name, dmg] = String(item.name || '').split('\n')
+        const value = parseFloat(dmg) || 0
+        if (roles.includes(name) && value > bestDmg) {
+            best = name
+            bestDmg = value
+        }
+    }
+    return best
+}
+
+function screenData(e, data, cfg = {}) {
     const miaoRes = `${cwd}/plugins/miao-plugin/resources/`
     // 伤害记录里旅行者写作「草主」等，要对应到结果里的「旅行者草」
     const traveler = Object.keys(data.avatars).find(n => n.startsWith(TRAVELER))
@@ -274,6 +321,8 @@ function screenData(e, data) {
     return {
         ...buildScreenView(data, viewName, miaoRes, fs.existsSync),
         data,
+        showDamages: cfg.showDamages !== false,
+        showAvatars: cfg.showAvatars !== false,
         quality: 100,
         saveId: e.user_id,
         miaoRes,

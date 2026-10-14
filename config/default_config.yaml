@@ -5,3 +5,11 @@
 sendTips: true
 # 提示信息自动撤回的秒数，0 为不撤回（最长 120 秒）
 tipsRecall: 5
+# 结果图是否显示「伤害过程」表
+showDamages: true
+# 结果图是否显示「队伍与输出占比」面板
+showAvatars: true
+# 主 C（输出占比最高的角色）按 100% 暴击率计算，开启后每次计算会多请求一次小助手
+mainCritFull: false
+# 全队按 100% 暴击率计算（开启时主 C 满暴不再单独生效）
+teamCritFull: false
