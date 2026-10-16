@@ -7,6 +7,7 @@ import getServer from './GetData/getServer.js'
 import simpleTeamDamageRes from './simpleDamage/simpleTeamDamageRes.js'
 import buildScreenView, {makeOwnerOf} from './simpleDamage/screenView.js'
 import {BASE_ENEMY_LEVEL, scaleEnemyLevel} from './simpleDamage/enemyLevel.js'
+import {energyCycle} from './simpleDamage/energyCycle.js'
 import puppeteer from '../../../../lib/puppeteer/puppeteer.js'
 import {findPreset} from "../../model/teamPreset.js"
 import {getConfig} from "../../model/config.js"
@@ -15,6 +16,21 @@ import {COMBO_USAGE, inferTeam, parseCombo, splitTeamAndCombo, splitTokens} from
 import {LOADOUT_USAGE, applyLoadout, parseMember} from "../../model/loadout.js"
 
 let cwd = process.cwd().replace(/\\/g, '/')
+
+/** 大招耗能：取 miao 天赋数据里元素爆发的「元素能量」，旅行者按元素；玛薇卡、丝柯克等没有元素能量的返回 0 */
+const burstCostCache = {}
+function burstCost(char, elem) {
+    const dir = char.isTraveler ? `旅行者/${elem}` : char.name
+    if (!(dir in burstCostCache)) {
+        let cost = 0
+        try {
+            const meta = JSON.parse(fs.readFileSync(`${cwd}/plugins/miao-plugin/resources/meta-gs/character/${dir}/data.json`, 'utf8'))
+            cost = Number(meta.talent?.q?.tables?.find(t => t.name === '元素能量')?.values?.[0]) || 0
+        } catch {}
+        burstCostCache[dir] = cost
+    }
+    return burstCostCache[dir]
+}
 /** 小助手请求头 */
 const headers = {
     referer: 'https://servicewechat.com/wx2ac9dce11213c3a8/192/page-frame.html',
@@ -188,6 +204,9 @@ export async function team(e, tokens, uid) {
   let NoDataName = []
   let loadoutTips = []
   let loadoutWarns = []
+  // 循环充能估算用：大招耗能、充能效率（换装后）
+  let burstCosts = {}
+  let rechargeRates = {}
   let player = Player.create(uid)
   // role_data 的顺序即手法里的角色序号，必须按队伍顺序依次处理
   for (const v of teamarId) {
@@ -223,6 +242,8 @@ export async function team(e, tokens, uid) {
     }
     teyvatData.role = teyvatName
     rolesData[teyvatName] = panel
+    burstCosts[teyvatName] = burstCost(v, v.isTraveler ? (loadoutElem || profile.elem) : profile.elem)
+    rechargeRates[teyvatName] = parseFloat(teyvatData.recharge) || 100
     role_data.push(teyvatData)
   }
 
@@ -292,6 +313,10 @@ export async function team(e, tokens, uid) {
   if (enemyLevel !== BASE_ENEMY_LEVEL) {
     scaleEnemyLevel(data, enemyLevel, makeOwnerOf(Object.keys(data.avatars), viewNameOf(data)))
     calcNotes.push(`怪物${enemyLevel}级`)
+  }
+  // 循环充能：估算零能量开局时每人一轮能否攒够大招
+  if (cfg.energyCheck !== false) {
+    energyCycle(data, burstCosts, rechargeRates, makeOwnerOf(Object.keys(data.avatars), viewNameOf(data)))
   }
   data.custom = !!custom
   data.calcNotes = calcNotes

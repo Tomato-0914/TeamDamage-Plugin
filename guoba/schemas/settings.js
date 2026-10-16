@@ -34,6 +34,13 @@ export default [
     component: 'Switch'
   },
   {
+    field: 'settings.energyCheck',
+    label: '循环充能',
+    helpMessage: '队伍面板显示每人一轮能攒的能量 / 大招耗能，估算零能量开局能否循环',
+    bottomHelpMessage: '小助手固定满能量开局，这里只做估算，不影响伤害结果',
+    component: 'Switch'
+  },
+  {
     field: 'settings.mainCritFull',
     label: '主C满暴',
     helpMessage: '输出占比最高的角色按 100% 暴击计算',
@@ -58,7 +65,7 @@ export default [
 ]
 
 /** 开关类设置项 */
-const SWITCHES = ['sendTips', 'showDamages', 'showAvatars', 'mainCritFull', 'teamCritFull']
+const SWITCHES = ['sendTips', 'showDamages', 'showAvatars', 'energyCheck', 'mainCritFull', 'teamCritFull']
 
 /** 读取 */
 export function getData () {

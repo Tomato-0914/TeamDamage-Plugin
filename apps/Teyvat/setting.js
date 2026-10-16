@@ -10,6 +10,7 @@ import { pluginName, pluginRoot } from '../../model/path.js'
 export const SETTING_ITEMS = [
   { key: 'showDamages', name: '伤害过程', desc: '结果图是否展示伤害过程表', type: 'bool' },
   { key: 'showAvatars', name: '队伍面板', desc: '结果图是否展示队伍与输出占比', type: 'bool' },
+  { key: 'energyCheck', name: '循环充能', desc: '队伍面板显示零能量开局时一轮能攒的能量（估算）', type: 'bool' },
   { key: 'mainCritFull', name: '主C满暴', desc: '输出占比最高的角色按 100% 暴击计算', type: 'bool' },
   { key: 'teamCritFull', name: '全队满暴', desc: '全队按 100% 暴击计算', type: 'bool' },
   { key: 'sendTips', name: '提示信息', desc: '计算前发送 UID、队伍、手法等提示', type: 'bool' },
@@ -19,7 +20,7 @@ export const SETTING_ITEMS = [
 
 /** 提瓦特小助手接口固定、无法修改的计算参数，只做展示 */
 export const FIXED_ITEMS = [
-  { name: '开局满能量', desc: '小助手固定按开局满能量计算', value: '开启' },
+  { name: '开局满能量', desc: '小助手固定满能量开局，零能量可看「循环充能」', value: '开启' },
   { name: '怪物抗性', desc: '小助手固定的基础元素抗性', value: '10%' },
   { name: '目标类型', desc: '仅对单体', value: '单体' }
 ]

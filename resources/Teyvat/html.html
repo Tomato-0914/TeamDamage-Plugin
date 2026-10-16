@@ -101,6 +101,10 @@
   .av .kv b { font-family: "NumFont"; font-weight: 400; color: var(--ink); font-size: 17px; }
   /* 天赋 10 级（满级）及以上（命座等额外提升，最高 15）用金色 */
   .av .kv b .lv-hi { color: #d4880f; }
+  /* 循环充能：够绿色、不够红色、手法里没放大招为灰色 */
+  .av .kv b.cy.ok { color: #2f9e5b; }
+  .av .kv b.cy.bad { color: #d64545; }
+  .av .kv b.cy.na { color: var(--sub); }
 
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chips span { font-size: 17px; padding: 4px 10px; border-radius: 7px; background: rgba(255,255,255,0.6); color: #3f3a46; }
@@ -187,6 +191,7 @@
         <div class="kv"><span>暴击 / 暴伤</span><b>{{a.cp}} / {{a.cd}}</b></div>
         <div class="kv"><span>{{a.key_prop}}</span><b>{{a.key_value}}</b></div>
         <div class="kv"><span>剩余能量</span><b>{{a.recharge.pct}}</b></div>
+        {{if a.cycle}}<div class="kv"><span>循环充能</span><b class="cy {{a.cycle.cls}}">{{a.cycle.text}}</b></div>{{/if}}
         <div class="kv"><span>输出占比</span><b>{{a.share}}%</b></div>
       </div>
       {{/each}}

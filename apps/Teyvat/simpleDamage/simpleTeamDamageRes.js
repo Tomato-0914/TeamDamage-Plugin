@@ -62,7 +62,7 @@ async function simpleTeamDamageRes (raw, rolesData) {
       key_value: role.key_value,
       skills,
       // 小助手没返回该角色的充能信息时用占位，避免模板取值报错
-      recharge: { pct: '-', same: '-', diff: '-' }
+      recharge: { pct: '-', same: '-', diff: '-', none: 0, energy: 0 }
     }
   })
 
@@ -70,14 +70,17 @@ async function simpleTeamDamageRes (raw, rolesData) {
     let [name, tmp] = String(rechargeData.recharge || '').split('共获取同色球')
     if (!avatars[name] || !tmp) return
     let [same, diff = ''] = tmp.split('个，异色球')
+    let none = 0
     if (diff.split('个，无色球').length === 2) {
-      // 暂未排版无色球
-      diff = diff.split('个，无色球')[0]
+      [diff, none] = diff.split('个，无色球')
     }
     avatars[name].recharge = {
       pct: rechargeData.rate,
       same: _.round(parseFloat(same), 1),
-      diff: _.round(parseFloat(diff.replace('个', '')), 1)
+      diff: _.round(parseFloat(diff.replace('个', '')), 1),
+      none: _.round(parseFloat(String(none).replace('个', '')) || 0, 1),
+      // 一轮结束时的能量（开局满能量，放过大招后重新攒的）
+      energy: Number(rechargeData.energy) || 0
     }
   })
 
