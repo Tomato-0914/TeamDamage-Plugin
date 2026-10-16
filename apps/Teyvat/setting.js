@@ -19,7 +19,7 @@ export const SETTING_ITEMS = [
 
 /** 提瓦特小助手接口固定、无法修改的计算参数，只做展示 */
 export const FIXED_ITEMS = [
-  { name: '开局满能量', desc: '小助手接口不支持设置', value: '—' },
+  { name: '开局满能量', desc: '小助手固定按开局满能量计算', value: '开启' },
   { name: '怪物抗性', desc: '小助手固定的基础元素抗性', value: '10%' },
   { name: '目标类型', desc: '仅对单体', value: '单体' }
 ]
