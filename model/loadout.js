@@ -14,11 +14,8 @@ import { ArtifactSet, Character, Weapon } from '../../miao-plugin/models/index.j
 
 const CN_NUM = { 零: 0, 〇: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 }
 
-/**
- * 超过 6 命的写法按突破等级折算：95 级要 1 个无主的命星，100 级再要 2 个，共 3 个
- * 所以 7 命 = 6 命 + 95 级，9 命 = 6 命 + 100 级，没有 8 命
- */
-const EXTRA_CONS_LEVEL = { 7: 95, 9: 100 }
+/** miao 角色成长数据的等级节点：details 里有 20 / 20+ / … / 90 / 90+ / 100，带 + 的是突破后的数值 */
+const LV_STEP = [1, 20, 40, 50, 60, 70, 80, 90, 100]
 
 /** 单个数字（阿拉伯或中文）转数值，「满」取 max */
 const toNum = (v, max) => (v === '满' ? max : v in CN_NUM ? CN_NUM[v] : Number(v))
@@ -84,19 +81,12 @@ function parseLoadoutMods (list, charNames) {
   const mods = {}
   const unknown = []
   for (const item of list) {
-    // 命座：六命 / 6命 / 满命 / 命座6 / 命座六 / c6；7 命、9 命见 EXTRA_CONS_LEVEL
+    // 命座：六命 / 6命 / 满命 / 命座6 / 命座六 / c6，最高 6 命
     let m = item.match(/^([0-9零〇一二三四五六七八九满])命座?$/) || item.match(/^命座([0-9零〇一二三四五六七八九满])$/) || item.match(/^c([0-9])$/i)
     if (m) {
       const cons = toNum(m[1], 6)
-      if (cons <= 6) {
-        mods.cons = cons
-        delete mods.consAlias
-      } else if (EXTRA_CONS_LEVEL[cons]) {
-        mods.cons = 6
-        mods.consAlias = cons
-      } else {
-        unknown.push(`${item}（没有${cons}命：7 命 = 95 级，9 命 = 100 级）`)
-      }
+      if (cons <= 6) mods.cons = cons
+      else unknown.push(`${item}（命座最高 6 命）`)
       continue
     }
     // 精炼：精5 / 精五 / 精炼5 / 满精 / 5精 / 五精 / r5
@@ -112,7 +102,7 @@ function parseLoadoutMods (list, charNames) {
       else unknown.push(`${item}（天赋请写 3 位如 999、6 位如 101313，或 10-13-13）`)
       continue
     }
-    // 等级：小助手接受到 100 级（实测更高也收但不校验），本地限制在 1~100
+    // 等级：1~100 级，和命座无关（0 命也能升到 100 级）
     m = item.match(/^(?:等级)?(\d{1,3})级$/)
     if (m) {
       mods.level = Math.min(100, Math.max(1, Number(m[1])))
@@ -144,8 +134,6 @@ function parseLoadoutMods (list, charNames) {
     }
     unknown.push(item)
   }
-  // 7/9 命折算的等级，单独写了等级时以等级为准
-  if (mods.consAlias && mods.level === undefined) mods.level = EXTRA_CONS_LEVEL[mods.consAlias]
   return { mods, unknown }
 }
 
@@ -160,8 +148,11 @@ export function parseMember (token) {
   return { name, mods, unknown }
 }
 
-/** 武器副词条加到 role_data 上，sign 为 -1 时撤掉 */
-function applyWeaponBonus (roleData, key, value, sign) {
+/**
+ * 武器副词条、角色突破属性加到 role_data 上，sign 为 -1 时撤掉
+ * @param {string} elem 角色元素（miao key），dmg 类加成加到该元素的伤害字段
+ */
+function applyWeaponBonus (roleData, key, value, sign, elem = '') {
   const v = num(value) * sign
   if (!v) return
   switch (key) {
@@ -190,7 +181,73 @@ function applyWeaponBonus (roleData, key, value, sign) {
     case 'phy':
       roleData.physical_dmg = pct(unpct(roleData.physical_dmg) + v)
       break
+    case 'heal':
+      roleData.heal = pct(unpct(roleData.heal) + v)
+      break
+    case 'dmg':
+      if (ELEM_DMG[elem]) roleData[ELEM_DMG[elem]] = pct(unpct(roleData[ELEM_DMG[elem]]) + v)
+      break
   }
+}
+
+/** 等级对应的突破阶段（区间右端不算突破，如 80 级按 70~80 阶段，90 级按 80~90 阶段） */
+const promoteOf = (lv) => Math.max(0, LV_STEP.findIndex((s, i) => i + 1 < LV_STEP.length && lv <= LV_STEP[i + 1]))
+
+/**
+ * 角色在指定等级的基础生命 / 攻击 / 防御和突破属性，算法同 miao-plugin Attr.setCharAttr
+ * @param {number} promote 突破阶段，不传或与等级不符时按 promoteOf 推算
+ * @returns {{hp: number, atk: number, def: number, key: string, value: number}|null} 没有成长数据时返回 null
+ */
+function charLvAttr (char, level, promote) {
+  const meta = char?.detail?.attr
+  if (!meta?.details || !meta?.keys) return null
+  let p = Number.isInteger(promote) ? promote : promoteOf(level)
+  if (!(level >= LV_STEP[p] && level <= LV_STEP[p + 1])) p = promoteOf(level)
+  const [left, right] = [LV_STEP[p], LV_STEP[p + 1]]
+  const dl = meta.details[`${left}+`] || meta.details[left]
+  const dr = meta.details[right]
+  if (!dl || !dr) return null
+  const lin = (i) => dl[i] * 1 + (dr[i] - dl[i]) * (level - left) / (right - left)
+  // 突破属性按 5 级一档
+  const step = (i) => dl[i] * 1 + (dr[i] - dl[i]) * Math.floor((level - left) / 5) / Math.round((right - left) / 5)
+  return { hp: lin(0), atk: lin(1), def: lin(2), key: meta.keys[3], value: step(3) }
+}
+
+/** 圣遗物上的固定值词条（hpPlus / defPlus）合计，用来从最终面板里拆出百分比加成 */
+function artisFlat (profile, key) {
+  let sum = 0
+  for (const arti of Object.values(profile.artis?.artis || {})) {
+    if (!arti?.main) continue
+    if (arti.main.key === key) sum += num(arti.main.value)
+    for (const a of arti.attrs || []) if (a.key === key) sum += num(a.value)
+  }
+  return sum
+}
+
+/**
+ * 换等级：按 miao 的成长数据重算基础生命 / 攻击 / 防御与突破属性
+ * - base_attack 含武器白值，只替换角色那部分
+ * - 生命、防御传的是最终值：差值按 (最终值 - 圣遗物固定值) / 基础值 的百分比加成放大
+ * @returns {boolean} 没有成长数据（无法重算属性）时返回 false
+ */
+function applyLevel (roleData, profile, level) {
+  const oldLv = num(profile.level) || 90
+  const before = charLvAttr(profile.char, oldLv, profile.promote)
+  const after = charLvAttr(profile.char, level)
+  if (!before || !after) return false
+  roleData.base_attack = Math.round(num(roleData.base_attack) + after.atk - before.atk)
+  for (const [stat, final, base, flat] of [['hp', 'hp', 'base_hp', 'hpPlus'], ['def', 'defend', 'base_defend', 'defPlus']]) {
+    const oldBase = num(roleData[base])
+    if (!oldBase) continue
+    const mult = (num(roleData[final]) - artisFlat(profile, flat)) / oldBase
+    const delta = after[stat] - before[stat]
+    roleData[base] = Math.round(oldBase + delta)
+    roleData[final] = Math.round(num(roleData[final]) + delta * mult)
+  }
+  // 突破属性（暴伤、攻击% 等）只在 90 级以下随等级变化
+  const key = after.key.replace(/Base$/, '')
+  if (after.key === before.key) applyWeaponBonus(roleData, key, after.value - before.value, 1, profile.elem)
+  return true
 }
 
 /**
@@ -209,7 +266,7 @@ export function applyLoadout (roleData, panel, mods, profile) {
     const oldCons = num(roleData.role_class)
     roleData.role_class = mods.cons
     panel.cons = mods.cons
-    labels.push(`${mods.consAlias ?? mods.cons}命`)
+    labels.push(`${mods.cons}命`)
     // 3/5 命的天赋 +3：服务端不会自己加，没指定天赋时按命座变化补上或撤掉
     // 加哪项取 miao 的 talentCons，阿蕾奇诺、那维莱特等 3 命加的是普攻
     if (!mods.talent && !switchElem) {
@@ -255,6 +312,7 @@ export function applyLoadout (roleData, panel, mods, profile) {
   }
 
   if (mods.level !== undefined) {
+    if (!applyLevel(roleData, profile, mods.level)) warns.push(`${roleData.role}没有成长数据，换${mods.level}级只改了等级相关的系数`)
     roleData.level = mods.level
     panel.level = mods.level
     labels.push(`${mods.level}级`)
