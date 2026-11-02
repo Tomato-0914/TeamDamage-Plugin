@@ -29,7 +29,7 @@ const ELEM_DMG = { pyro: 'fire_dmg', hydro: 'water_dmg', cryo: 'ice_dmg', electr
 /** 旅行者 3/5 命加天赋的顺序随元素变化（与 miao Character.talentCons 一致） */
 const travelerTalentCons = (elem) => (['dendro', 'hydro', 'pyro'].includes(elem) ? { e: 3, q: 5 } : { e: 5, q: 3 })
 
-export const LOADOUT_USAGE = '支持：换满命 / 换六命 / 换精五 / 换满精 / 换天赋101313 / 换90级 / 换武器名（护摩、讨龙、专武）/ 换4千岩 / 换2追忆2如雷 / 旅行者换雷'
+export const LOADOUT_USAGE = '支持：换满命 / 换六命 / 换精五 / 换满精 / 换天赋101313 / 换90级 / 换武器名（护摩、讨龙、专武）/ 换4千岩 / 换2追忆2如雷 / 旅行者换雷；可连写如 换精五专武'
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0)
 const pct = (v) => `${Math.round(num(v) * 10) / 10}%`
@@ -72,6 +72,61 @@ function parseArtisSets (text) {
 }
 
 /**
+ * 解析单个换装词
+ * @returns {{mods: object}|{err: string}|null} 认得出返回 mods，认得出类型但写法不对返回 err，完全不认识返回 null
+ */
+function parseLoadoutItem (item, charNames) {
+  // 命座：六命 / 6命 / 满命 / 命座6 / 命座六 / c6，最高 6 命
+  let m = item.match(/^([0-9零〇一二三四五六七八九满])命座?$/) || item.match(/^命座([0-9零〇一二三四五六七八九满])$/) || item.match(/^c([0-9])$/i)
+  if (m) {
+    const cons = toNum(m[1], 6)
+    return cons <= 6 ? { mods: { cons } } : { err: `${item}（命座最高 6 命）` }
+  }
+  // 精炼：精5 / 精五 / 精炼5 / 满精 / 5精 / 五精 / r5
+  m = item.match(/^(?:精炼?|r)([1-5一二两三四五满])阶?$/i) || item.match(/^([1-5一二两三四五满])精炼?$/)
+  if (m) return { mods: { affix: toNum(m[1], 5) } }
+  m = item.match(/^(?:天赋|技能)(.+)$/)
+  if (m) {
+    const talent = parseTalent(m[1])
+    return talent ? { mods: { talent } } : { err: `${item}（天赋请写 3 位如 999、6 位如 101313，或 10-13-13）` }
+  }
+  // 等级：1~100 级，和命座无关（0 命也能升到 100 级）
+  m = item.match(/^(?:等级)?(\d{1,3})级$/)
+  if (m) return { mods: { level: Math.min(100, Math.max(1, Number(m[1]))) } }
+  if (/^(?:专武|专属武器|专属)$/.test(item)) {
+    // miao 的武器别名里有「神里绫人专武」「万叶专武」这类写法，标准名和用户写的名字都试一下
+    const own = charNames.map(n => Weapon.get(`${n}专武`)).find(w => w?.name)
+    return own ? { mods: { weapon: own.name } } : { err: `${item}（没查到专武，请直接写武器名）` }
+  }
+  // 旅行者换元素：换雷 / 换雷元素 / 换雷主
+  m = item.match(/^([风岩雷草水火冰])(?:元素|主|系)?$/)
+  if (m) return { mods: { elem: ELEM_KEY[m[1]] } }
+  // 武器放在套装前：武器名更具体，「绝缘」这类只有套装叫得出的词会落到下面
+  const weapon = Weapon.get(item)
+  if (weapon?.name) return { mods: { weapon: weapon.name } }
+  const sets = parseArtisSets(item)
+  if (sets) return { mods: { artis: sets } }
+  return null
+}
+
+/** 连写的换装词（精五专武 / 满命满精 / 精5天赋101313）拆成几段都认得出的词，拆不开返回 null */
+const SPLIT_MAX_LEN = 32
+function splitLoadoutItem (item, charNames, memo = new Map()) {
+  if (memo.has(item)) return memo.get(item)
+  let result = null
+  for (let i = 1; i < item.length && !result; i++) {
+    const head = parseLoadoutItem(item.slice(0, i), charNames)
+    if (!head?.mods) continue
+    const tailText = item.slice(i)
+    const tail = parseLoadoutItem(tailText, charNames)
+    const rest = tail?.mods ? [tail.mods] : splitLoadoutItem(tailText, charNames, memo)
+    if (rest) result = [head.mods, ...rest]
+  }
+  memo.set(item, result)
+  return result
+}
+
+/**
  * 解析「换」后面的各段
  * @param {string[]} list
  * @param {string[]} charNames 角色标准名及用户写的名字，用于查「X专武」
@@ -81,58 +136,18 @@ function parseLoadoutMods (list, charNames) {
   const mods = {}
   const unknown = []
   for (const item of list) {
-    // 命座：六命 / 6命 / 满命 / 命座6 / 命座六 / c6，最高 6 命
-    let m = item.match(/^([0-9零〇一二三四五六七八九满])命座?$/) || item.match(/^命座([0-9零〇一二三四五六七八九满])$/) || item.match(/^c([0-9])$/i)
-    if (m) {
-      const cons = toNum(m[1], 6)
-      if (cons <= 6) mods.cons = cons
-      else unknown.push(`${item}（命座最高 6 命）`)
+    const one = parseLoadoutItem(item, charNames)
+    if (one?.mods) {
+      Object.assign(mods, one.mods)
       continue
     }
-    // 精炼：精5 / 精五 / 精炼5 / 满精 / 5精 / 五精 / r5
-    m = item.match(/^(?:精炼?|r)([1-5一二两三四五满])阶?$/i) || item.match(/^([1-5一二两三四五满])精炼?$/)
-    if (m) {
-      mods.affix = toNum(m[1], 5)
+    // 整段认不出时，看看是不是几个换装词连写在一起（换精五专武 = 换精五换专武）
+    const parts = item.length <= SPLIT_MAX_LEN ? splitLoadoutItem(item, charNames) : null
+    if (parts) {
+      Object.assign(mods, ...parts)
       continue
     }
-    m = item.match(/^(?:天赋|技能)(.+)$/)
-    if (m) {
-      const talent = parseTalent(m[1])
-      if (talent) mods.talent = talent
-      else unknown.push(`${item}（天赋请写 3 位如 999、6 位如 101313，或 10-13-13）`)
-      continue
-    }
-    // 等级：1~100 级，和命座无关（0 命也能升到 100 级）
-    m = item.match(/^(?:等级)?(\d{1,3})级$/)
-    if (m) {
-      mods.level = Math.min(100, Math.max(1, Number(m[1])))
-      continue
-    }
-    if (/^(?:专武|专属武器|专属)$/.test(item)) {
-      // miao 的武器别名里有「神里绫人专武」「万叶专武」这类写法，标准名和用户写的名字都试一下
-      const own = charNames.map(n => Weapon.get(`${n}专武`)).find(w => w?.name)
-      if (own) mods.weapon = own.name
-      else unknown.push(`${item}（没查到专武，请直接写武器名）`)
-      continue
-    }
-    // 旅行者换元素：换雷 / 换雷元素 / 换雷主
-    m = item.match(/^([风岩雷草水火冰])(?:元素|主|系)?$/)
-    if (m) {
-      mods.elem = ELEM_KEY[m[1]]
-      continue
-    }
-    // 武器放在套装前：武器名更具体，「绝缘」这类只有套装叫得出的词会落到下面
-    const weapon = Weapon.get(item)
-    if (weapon?.name) {
-      mods.weapon = weapon.name
-      continue
-    }
-    const sets = parseArtisSets(item)
-    if (sets) {
-      mods.artis = sets
-      continue
-    }
-    unknown.push(item)
+    unknown.push(one?.err || item)
   }
   return { mods, unknown }
 }
