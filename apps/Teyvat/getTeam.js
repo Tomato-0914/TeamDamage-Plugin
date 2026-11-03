@@ -100,6 +100,29 @@ function attachLoadouts(members, tokens) {
   return ''
 }
 
+/**
+ * 队伍里同一角色既写了本人、又单独写了「角色换xx」时（七七 奥黛塔 阿罗夏 奥黛塔换专武），
+ * 把换装合并到第一次出现的位置，不当成第 5 个队员
+ * 两处都没写换装（单纯重复）时原样保留，由后面的重复检查报错
+ * @param {string[]} members
+ * @returns {string[]}
+ */
+function mergeLoadoutMembers(members) {
+  const merged = []
+  const stds = []
+  for (const t of members) {
+    const std = resolveName(parseMember(t).name)
+    const idx = std ? stds.indexOf(std) : -1
+    if (idx !== -1 && (t.includes('换') || merged[idx].includes('换'))) {
+      if (t.includes('换')) merged[idx] += t.slice(t.indexOf('换'))
+      continue
+    }
+    merged.push(t)
+    stds.push(std)
+  }
+  return merged
+}
+
 /** 旅行者写法里明确带了元素（草主、旅行者雷），返回 miao 元素 key */
 function travelerElem(name, char) {
   return /[风岩雷草水火冰]/.test(name.replace(TRAVELER_WORDS, '')) ? char.elem : ''
@@ -114,12 +137,16 @@ function travelerElem(name, char) {
 export async function team(e, tokens, uid) {
   let {teamTokens: teamlist, comboTokens, loadoutTokens} = splitTeamAndCombo(tokens, resolveName)
   let inferred = false
+  // 超过 4 人时被忽略的队员，出图前提示
+  let droppedMembers = []
   // 使用了带手法的队伍预设、且指令里没写手法时，记下预设名用于报错提示
   let presetCombo = ''
   if (!teamlist.length && comboTokens.length) {
     teamlist = inferTeam(comboTokens, resolveName)
     inferred = teamlist.length > 0
   }
+  // 同一角色另写的「角色换xx」并到该队员上，不占队伍名额
+  teamlist = mergeLoadoutMembers(teamlist)
   // 队伍简写，后面可跟临时换装：#队伍伤害雷九 雷神换六命 班尼特换精5
   // 带换装的队员（香菱换六命）本身不是简写；跟了换装时开头若是角色名，按普通队伍处理
   const isLoadoutMember = t => t.includes('换') && !!resolveName(parseMember(t).name)
@@ -151,6 +178,7 @@ export async function team(e, tokens, uid) {
       await e.reply(`手法里出现了超过 4 个角色：${teamlist.join('、')}`, true)
       return true
     }
+    droppedMembers = teamlist.slice(4)
     teamlist = teamlist.slice(0, 4)
   }
 
@@ -270,6 +298,7 @@ export async function team(e, tokens, uid) {
   const enemyLevel = Math.round(Number(cfg.enemyLevel)) || BASE_ENEMY_LEVEL
   if (enemyLevel !== BASE_ENEMY_LEVEL) tips.push(`计算：怪物${enemyLevel}级（估算）`)
   if (loadoutTips.length) tips.push(`换装：${loadoutTips.join('；')}`)
+  if (droppedMembers.length) loadoutWarns.push(`队伍最多 4 人，「${droppedMembers.join('、')}」已忽略`)
   if (loadoutWarns.length) tips.push(`注意：${loadoutWarns.join('；')}`)
   // 提示信息按设置自动撤回，避免刷屏；关闭提示时仍发送换装警告
   if (cfg.sendTips !== false || loadoutWarns.length) {
