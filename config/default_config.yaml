@@ -11,8 +11,6 @@ showDamages: true
 showAvatars: true
 # 结果图的队伍面板是否显示「循环充能」：估算零能量开局时每人一轮能攒多少能量（攒到/大招耗能）
 energyCheck: true
-# QQ 官方机器人（QQBot 适配器）下，结果图后面带一个「队伍伤害」按钮，点击后把 #队伍伤害 填入输入框
-quickButton: true
 # 主 C（输出占比最高的角色）按 100% 暴击率计算，开启后每次计算会多请求一次小助手
 mainCritFull: false
 # 全队按 100% 暴击率计算（开启时主 C 满暴不再单独生效）
