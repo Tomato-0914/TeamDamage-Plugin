@@ -13,6 +13,7 @@ export const SETTING_ITEMS = [
   { key: 'energyCheck', name: '循环充能', desc: '队伍面板显示零能量开局时一轮能攒的能量（估算）', type: 'bool' },
   { key: 'mainCritFull', name: '主C满暴', desc: '输出占比最高的角色按 100% 暴击计算', type: 'bool' },
   { key: 'teamCritFull', name: '全队满暴', desc: '全队按 100% 暴击计算', type: 'bool' },
+  { key: 'quickButton', name: '快捷按钮', desc: '结果图后带「队伍伤害」输入按钮（仅 QQ 官方机器人）', type: 'bool' },
   { key: 'sendTips', name: '提示信息', desc: '计算前发送 UID、队伍、手法等提示', type: 'bool' },
   { key: 'tipsRecall', name: '提示撤回', desc: '提示信息自动撤回的秒数，0 为不撤回', type: 'int', min: 0, max: 120, unit: '秒', example: 5 },
   { key: 'enemyLevel', name: '怪物等级', desc: '小助手按 90 级计算，其他等级按防御公式估算', type: 'int', min: 1, max: 200, unit: '级', example: 100 }

@@ -41,6 +41,13 @@ export default [
     component: 'Switch'
   },
   {
+    field: 'settings.quickButton',
+    label: '快捷按钮',
+    helpMessage: '结果图后面带一个「队伍伤害」按钮，点击后把 #队伍伤害 填入输入框',
+    bottomHelpMessage: '仅 QQ 官方机器人（QQBot 适配器）生效',
+    component: 'Switch'
+  },
+  {
     field: 'settings.mainCritFull',
     label: '主C满暴',
     helpMessage: '输出占比最高的角色按 100% 暴击计算',
@@ -65,7 +72,7 @@ export default [
 ]
 
 /** 开关类设置项 */
-const SWITCHES = ['sendTips', 'showDamages', 'showAvatars', 'energyCheck', 'mainCritFull', 'teamCritFull']
+const SWITCHES = ['sendTips', 'showDamages', 'showAvatars', 'energyCheck', 'quickButton', 'mainCritFull', 'teamCritFull']
 
 /** 读取 */
 export function getData () {
