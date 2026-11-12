@@ -353,8 +353,19 @@ export async function team(e, tokens, uid) {
   data.presetName = preset?.name || ''
   let ScreenData = screenData(e, data, cfg)
   let img = await puppeteer.screenshot('TeamDamage', ScreenData)
-  await e.reply(img)
+  await e.reply(withQuickButton(e, img))
   return true
+}
+
+/**
+ * QQ 官方机器人（QQBot 适配器）下在结果图后面带一个输入按钮，点击后把「#队伍伤害」填入输入框
+ * 其他适配器不一定支持按钮，原样只发图
+ */
+function withQuickButton(e, img) {
+  if (!img) return img
+  const bot = e.bot || Bot[e.self_id]
+  if (bot?.adapter?.id !== 'QQBot' || typeof segment?.button !== 'function') return img
+  return [img, segment.button({ text: '队伍伤害', input: '#队伍伤害', send: false })]
 }
 
 /** 主 C：小助手结果里输出最高的队员（跳过绽放等非角色来源） */
